@@ -1,0 +1,1 @@
+"""SerpAPI client for EarnRadar."""
