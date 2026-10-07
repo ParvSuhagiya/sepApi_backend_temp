@@ -1,1 +1,0 @@
-"""EarnRadar application package."""

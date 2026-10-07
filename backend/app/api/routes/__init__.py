@@ -1,1 +1,0 @@
-"""EarnRadar API routes."""
