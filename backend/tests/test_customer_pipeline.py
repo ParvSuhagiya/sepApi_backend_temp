@@ -493,3 +493,39 @@ async def test_day_sub_budget_exhausted_cold_cache_raises_429(
         assert exc_info.value.code == "budget_exhausted"
     finally:
         get_settings.cache_clear()
+
+
+async def test_response_cache_holds_hashes_not_user_text(
+    monkeypatch: pytest.MonkeyPatch, fresh_cache, tmp_cache_path
+) -> None:
+    import re
+    import sqlite3
+
+    from app.config import get_settings
+
+    token = "zxqy-private-offer-token"
+    offer = (
+        "i have made a restaurant billing system with staff roles for mid "
+        f"level restaurants, unique marker {token} end of offer text here"
+    )
+    stage = _Stage()
+    _patch_stages(monkeypatch, stage)
+    monkeypatch.setenv("LEADS_CACHE_HOURS", "6")
+    get_settings.cache_clear()
+    try:
+        payload = await pipeline_module.run_leads(_input(offer=offer))
+        assert payload["leads"]
+    finally:
+        get_settings.cache_clear()
+
+    conn = sqlite3.connect(tmp_cache_path)
+    try:
+        rows = conn.execute("SELECT k, v FROM rank_cache").fetchall()
+    finally:
+        conn.close()
+    assert rows, "expected the response cache to be populated"
+    for key, value in rows:
+        assert re.fullmatch(r"leads:[0-9a-f]{64}", key), key
+        assert token not in key
+        assert token not in value  # raw offer text never cached
+        assert "Rahul" not in value  # no reviewer personal data cached

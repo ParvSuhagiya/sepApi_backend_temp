@@ -109,7 +109,6 @@ python scripts/ai_smoke.py
 Without the key the script prints a skip message and exits 0.
 
 ## Scoring and guardrails
-
 `EarnScore = 30% Demand + 20% Fit + 20% Trust + 15% Low competition + 15% Easy
 to start`, computed deterministically from the AI-estimated sub-scores.
 Demand, Competition and Trust themselves are AI-estimated from the collected
@@ -162,6 +161,27 @@ curl -X POST http://127.0.0.1:8000/api/outreach `
 Error responses always look like
 `{"error":{"code":"...","message":"...","request_id":"..."}}`.
 Rate-limited responses add a `Retry-After` header.
+
+## Responsible use (customer mode)
+
+`POST /api/leads` returns public business listings as ranked signals with
+an honesty disclaimer. When contacting businesses (this is engineering
+guidance, not legal advice):
+
+- Comply with India's DPDP Act 2023 and applicable telecom/WhatsApp rules
+  on unsolicited commercial messages.
+- Prefer calling the business's published number once instead of bulk
+  messaging; honour opt-outs immediately (drafts include an opt-out line).
+- The app never sends messages automatically — every outreach draft needs
+  human review before anything leaves your device.
+
+## Data retention
+
+The service stores NOTHING per user except the existing TTL cache of
+upstream SerpAPI responses (see `docs/DATA-HANDLING.md`): cache keys are
+hex hashes (never user text), reviewer names/links/photos are dropped at
+ingestion and never stored, logged or returned, and logs carry only
+request ids, stage names, counters and outcomes.
 
 ## Prewarm
 
