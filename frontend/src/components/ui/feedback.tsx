@@ -16,7 +16,7 @@ export function ProgressSteps({ steps, currentIndex }: { steps: string[]; curren
             aria-current={current ? 'step' : undefined}
             className={`rounded-full border px-3 py-1 text-xs font-semibold ${
               current
-                ? 'border-brand bg-brand text-white'
+                ? 'border-brand-strong bg-brand-strong text-white'
                 : done
                   ? 'border-line bg-surface text-ink'
                   : 'border-line bg-raised text-muted'

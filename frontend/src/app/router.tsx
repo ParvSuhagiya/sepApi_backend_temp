@@ -1,9 +1,24 @@
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Providers } from './providers';
-import { CustomersPage } from '../pages/CustomersPage';
-import { HomePage } from '../pages/HomePage';
-import { NotFoundPage } from '../pages/NotFoundPage';
+import { ScrollToTop } from './ScrollToTop';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Spinner } from '../components/ui/Spinner';
+
+// Route-level splitting: page chunks load on demand. Heavy libraries
+// (Leaflet, Recharts) arrive the same way with their components.
+const HomePage = lazy(() => import('../pages/HomePage').then((m) => ({ default: m.HomePage })));
+const CustomersPage = lazy(() =>
+  import('../pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
+);
+const HowItWorksPage = lazy(() =>
+  import('../pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
 
 // DEV-ONLY: the lazy() call sits inside the statically-false branch in
 // production builds, so bundlers drop the dynamic import (and its chunk)
@@ -17,25 +32,32 @@ const DevUiRoute =
       )
     : null;
 
-/** Route table. Heavy pages (map, charts) become lazy() in step 1.4. */
+/** App shell: skip link, header, main landmark, footer, error boundary. */
 export function AppRoutes() {
   return (
     <Providers>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/customers" element={<CustomersPage />} />
-        {DevUiRoute ? (
-          <Route
-            path="/dev/ui"
-            element={
-              <Suspense fallback={<p>Loading preview…</p>}>
-                <DevUiRoute />
-              </Suspense>
-            }
-          />
-        ) : null}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[var(--z-toast)] focus:rounded-md focus:bg-raised focus:px-4 focus:py-2 focus:font-semibold focus:text-ink"
+      >
+        Skip to content
+      </a>
+      <Header />
+      <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+        <ErrorBoundary>
+          <Suspense fallback={<Spinner label="Loading page" />}>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </main>
+      <Footer />
     </Providers>
   );
 }

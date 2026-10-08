@@ -38,7 +38,7 @@ export function UiKitchenSinkPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   return (
     <ToastProvider>
-      <main className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
+      <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
         <h1>UI kitchen sink</h1>
         <Section title="Theme">
           <Button variant="secondary" onClick={toggle}>
@@ -144,7 +144,7 @@ export function UiKitchenSinkPage() {
           </div>
         </Section>
         <VisuallyHidden>Kitchen sink end marker</VisuallyHidden>
-      </main>
+      </div>
     </ToastProvider>
   );
 }

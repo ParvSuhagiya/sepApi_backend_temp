@@ -15,6 +15,7 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
   --color-focus: var(--focus);
 
@@ -57,6 +58,7 @@
   --line: #e2e8f0;
 
   --brand: #4f46e5;
+  --brand-strong: #4f46e5;
   --brand-ink: #ffffff;
   --focus: #4f46e5;
 
@@ -93,7 +95,8 @@
   --muted: #94a3b8;
   --line: #1e293b;
 
-  --brand: #818cf8;
+  --brand: #a5b4fc;
+  --brand-strong: #4f46e5;
   --brand-ink: #ffffff;
   --focus: #a5b4fc;
 
