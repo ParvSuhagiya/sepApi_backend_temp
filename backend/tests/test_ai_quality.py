@@ -62,16 +62,10 @@ class ScriptedLLM:
 
 
 def patch_llm(monkeypatch: pytest.MonkeyPatch, fake: ScriptedLLM) -> None:
-    for target in (
-        "app.services.llm.ask_json",
-        "app.services.planner.ask_json",
-        "app.services.ranker.ask_json",
-    ):
+    # Single seam: production code only calls app.services.llm.ask_json/ask_text.
+    for target in ("app.services.llm.ask_json",):
         monkeypatch.setattr(target, fake.ask_json)
-    for target in (
-        "app.services.llm.ask_text",
-        "app.services.outreach.ask_text",
-    ):
+    for target in ("app.services.llm.ask_text",):
         monkeypatch.setattr(target, fake.ask_text)
 
 

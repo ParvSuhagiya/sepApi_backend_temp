@@ -125,8 +125,19 @@ def _map_sdk_error(exc: BaseException) -> LLMError:
 
 
 def _is_temperature_rejection(exc: BaseException) -> bool:
+    """True only for HTTP 400s whose message blames the temperature parameter.
+
+    Any other 400 (e.g. an invalid model id) must surface immediately instead
+    of triggering a second billed call without temperature.
+    """
     status = getattr(exc, "status_code", None)
-    return isinstance(exc, APIStatusError) and status == 400
+    if not (isinstance(exc, APIStatusError) and status == 400):
+        return False
+    try:
+        message = str(exc).lower()
+    except Exception:
+        return False
+    return "temperature" in message
 
 
 def _extract_text(response: object) -> str:

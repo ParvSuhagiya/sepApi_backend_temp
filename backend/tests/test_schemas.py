@@ -121,7 +121,15 @@ def opportunity_sample() -> dict[str, object]:
         "cost_ease": 85,
         "trust": 75,
         "evidence": ["Local tutoring demand", "Remote tutoring listings"],
-        "plan_7_days": ["Choose a topic", "Prepare a lesson", "Contact learners"],
+        "plan_7_days": [
+            "Choose a topic",
+            "Prepare a lesson",
+            "Contact learners",
+            "Offer a free trial",
+            "Collect feedback",
+            "Set your price",
+            "Repeat weekly",
+        ],
         "earn_score": 82,
         "score_breakdown": {"fit": 0.9, "demand": 0.8},
     }

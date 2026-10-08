@@ -15,24 +15,26 @@ from app.prompts import (
 )
 from app.schemas import Profile
 from app.services import llm as _llm_mod
-from app.services.llm import ask_text as _orig_ask_text
 from app.utils import truncate, truncate_to_sentence, word_count
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "SAFETY_NOTE",
     "clean_message",
     "draft_outreach",
 ]
 
-# Exposed for tests that monkeypatch ``app.services.outreach.ask_text``.
-ask_text = _orig_ask_text
-_ORIG_ASK_TEXT = _orig_ask_text
+SAFETY_NOTE = "Verify the business before paying or sharing documents."
 
 _ALLOW_KEYS = ("name", "type", "address", "rating")
 
 _URL_RE = re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE)
-_PHONE_RE = re.compile(r"\+?\d(?:[\s\-\(\)]*\d){6,}")
+# Same Indian-mobile shape as the ranker: strips real phone numbers but can
+# never delete a rupee amount such as "₹15,000" or a salary range.
+_PHONE_RE = re.compile(
+    r"(?<![\d,])(?:\+?91[\s\-]?|0)?[6-9]\d{4}[\s\-]?\d{5}(?![\d,])"
+)
 _EMOJI_RE = re.compile(
     "[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE00-\uFE0F"
     "\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\u2700-\u27BF"
@@ -44,11 +46,8 @@ _MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
 
 
 async def _call_outreach_ask(system: str, user: str) -> str:
-    """Call ask_text, honouring patches on either outreach or llm module."""
-    fn = globals().get("ask_text", _ORIG_ASK_TEXT)
-    if fn is _ORIG_ASK_TEXT:
-        fn = _llm_mod.ask_text
-    return await fn(system, user, OUTREACH_MAX_TOKENS, label="outreach")
+    """Call the shared LLM seam (tests patch ``app.services.llm.ask_text``)."""
+    return await _llm_mod.ask_text(system, user, OUTREACH_MAX_TOKENS, label="outreach")
 
 
 def clean_message(text) -> str:
@@ -96,6 +95,9 @@ def clean_message(text) -> str:
     return s.strip()
 
 
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
 def _recipient_json(target: dict) -> str:
     recipient: dict = {}
     if isinstance(target, dict):
@@ -106,7 +108,10 @@ def _recipient_json(target: dict) -> str:
             if value is None:
                 continue
             if isinstance(value, str):
-                capped = truncate(value.strip(), 120)
+                # Allow-listed keys only, capped, control characters stripped:
+                # recipient fields come from Maps and the client (untrusted).
+                cleaned = _CONTROL_RE.sub("", value.strip())
+                capped = truncate(cleaned, 120)
                 if capped:
                     recipient[key] = capped
             elif isinstance(value, (int, float)):

@@ -104,7 +104,7 @@ class Opportunity(BaseModel):
     cost_ease: int = Field(ge=0, le=100)
     trust: int = Field(ge=0, le=100)
     evidence: list[str] = Field(min_length=2, max_length=3)
-    plan_7_days: list[str] = Field(min_length=3, max_length=7)
+    plan_7_days: list[str] = Field(min_length=7, max_length=7)
     earn_score: int
     score_breakdown: dict[str, float]
 
@@ -162,6 +162,8 @@ class Meta(BaseModel):
     request_id: str
     duration_ms: int
     degraded: list[str]
+    partial: list[str] = []
+    notes: list[str] = []
 
 
 class SearchResponse(BaseModel):
@@ -179,9 +181,10 @@ class SearchResponse(BaseModel):
 
 
 class OutreachResponse(BaseModel):
-    """Generated outreach message."""
+    """Generated outreach message plus a fixed safety note."""
 
     message: str
+    safety_note: str
 
 
 class ErrorDetail(BaseModel):

@@ -99,6 +99,11 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
     ranked = rank_opportunities(opps, signals, degraded)
     ranked = _drop_invalid_opportunities(ranked)
 
+    notes: list[str] = []
+    if len(ranked) < 5:
+        # FR-ERR-4: return what exists instead of failing.
+        notes.append("fewer_than_5_opportunities")
+
     duration_ms = int((time.perf_counter() - start) * 1000)
     try:
         credits = int(stats.get("credits_used", 0))
@@ -129,7 +134,12 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
         "trend_growth": dict(trend_growth),
         "forum": [item.model_dump() for item in forum],
         "stats": {"credits_used": credits, "cache_hits": hits},
-        "meta": {"request_id": rid, "duration_ms": duration_ms, "degraded": degraded},
+        "meta": {
+            "request_id": rid,
+            "duration_ms": duration_ms,
+            "degraded": degraded,
+            "notes": notes,
+        },
     }
 
 
@@ -139,19 +149,21 @@ async def draft_message(profile: Profile, target: dict) -> str:
 
 
 def _drop_invalid_opportunities(ranked: list[dict]) -> list[dict]:
-    """Keep only opportunities that satisfy the API schema.
+    """Last safety net: keep only opportunities that satisfy the API schema.
 
-    The ranker is lenient by design (e.g. it may keep a single evidence
-    string), while SearchResponse requires 2-3. Dropping here instead of
-    failing keeps one thin item from turning into a 500; if nothing
+    Validation and repair already happen in ``ranker.validate_opportunities``,
+    so anything dropped here is unexpected; the count is logged. If nothing
     survives, raise RankingFailed for a safe 502.
     """
     valid: list[dict] = []
+    dropped = 0
     for item in ranked:
         try:
             valid.append(Opportunity.model_validate(item).model_dump())
         except Exception:
-            logger.warning("dropping opportunity that fails API validation")
+            dropped += 1
+    if dropped:
+        logger.warning("dropping %d opportunities that fail API validation", dropped)
     if not valid:
         raise RankingFailed()
     return valid

@@ -30,6 +30,7 @@ from app.security import (
     reset_auth_limiter,
 )
 from app.services import pipeline as _pipeline
+from app.services.outreach import SAFETY_NOTE
 from app.services.serp import close_serp, init_cache, init_serp
 
 logger = logging.getLogger(__name__)
@@ -325,4 +326,4 @@ async def api_outreach(body: OutreachRequest, request: Request) -> dict:
     await require_access_code(request)
     await _enforce_outreach_limit(request)
     message = await _pipeline.draft_message(body.profile, body.target)
-    return {"message": message}
+    return {"message": message, "safety_note": SAFETY_NOTE}

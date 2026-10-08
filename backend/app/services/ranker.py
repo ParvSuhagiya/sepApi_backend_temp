@@ -17,7 +17,6 @@ from app.prompts import (
 )
 from app.schemas import OpportunityAI, Profile
 from app.services import llm as _llm_mod
-from app.services.llm import ask_json as _orig_ask_json
 from app.services.scam import scam_flags
 from app.utils import clamp_int, normalize_type, truncate
 
@@ -29,14 +28,25 @@ __all__ = [
     "rank",
 ]
 
-# Exposed for tests that monkeypatch ``app.services.ranker.ask_json``.
-ask_json = _orig_ask_json
-_ORIG_ASK_JSON = _orig_ask_json
+# Generic, honest final steps used ONLY to pad a 3-6 step plan up to the
+# documented 7 steps. Never advice that costs money or promises income.
+_PLAN_REPAIR_STEPS = [
+    "Review what worked this week and decide your next step",
+    "List two people or businesses to contact next week",
+    "Set aside one hour to close one skill gap you noticed",
+    "Track this week's earnings and expenses in a notebook",
+    "Ask one customer or peer for honest feedback",
+]
 
 _EVIDENCE_BUDGET_CHARS = 12000
 
 _URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
-_PHONE_RE = re.compile(r"\+?\d[\d\s\-]{8,}\d")
+# Indian mobile shapes only: optional +91/0 prefix, 10 digits starting 6-9.
+# Checked: strips "98765 43210" and "+91-9876543210" but keeps salary ranges
+# such as "12000 - 15000" and "10000 20000 30000".
+_PHONE_RE = re.compile(
+    r"(?<![\d,])(?:\+?91[\s\-]?|0)?[6-9]\d{4}[\s\-]?\d{5}(?![\d,])"
+)
 
 _PROMISE_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"100%\s*sure", re.IGNORECASE), "possible"),
@@ -59,16 +69,13 @@ _STOPWORDS = frozenset(
     }
 )
 
-_WORD_RE = re.compile(r"[A-Za-z]{4,}")
-_NUMBER_RE = re.compile(r"\d{2,}")
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_ITEM_WORD_RE = re.compile(r"[a-z]+")
 
 
 async def _call_ranker_ask(system: str, user: str) -> dict:
-    """Call ask_json, honouring patches on either ranker or llm module."""
-    fn = globals().get("ask_json", _ORIG_ASK_JSON)
-    if fn is _ORIG_ASK_JSON:
-        fn = _llm_mod.ask_json
-    return await fn(system, user, RANKER_MAX_TOKENS, label="ranker")
+    """Call the shared LLM seam (tests patch ``app.services.llm.ask_json``)."""
+    return await _llm_mod.ask_json(system, user, RANKER_MAX_TOKENS, label="ranker")
 
 
 def _get_field(obj: object, key: str, default: object = None) -> object:
@@ -77,11 +84,12 @@ def _get_field(obj: object, key: str, default: object = None) -> object:
     return getattr(obj, key, default) if hasattr(obj, key) else default
 
 
-def _scrub_text(value: object) -> str:
+def _scrub_text(value: object, *, scrub_phone: bool = True) -> str:
     if not isinstance(value, str):
         return ""
     cleaned = _URL_RE.sub("", value)
-    cleaned = _PHONE_RE.sub("", cleaned)
+    if scrub_phone:
+        cleaned = _PHONE_RE.sub("", cleaned)
     return " ".join(cleaned.split()).strip()
 
 
@@ -156,7 +164,9 @@ def build_evidence(jobs, local, trend_growth, forum, degraded) -> dict:
             "company": _scrub_text(_get_field(job, "company") or ""),
             "location": _scrub_text(_get_field(job, "location") or ""),
             "via": _scrub_text(_get_field(job, "via") or ""),
-            "salary": _scrub_text(_get_field(job, "salary") or ""),
+            # Salary ranges look like phone numbers to naive patterns, so the
+            # phone scrubber must never run on the salary field.
+            "salary": _scrub_text(_get_field(job, "salary") or "", scrub_phone=False),
             "desc": _scrub_text(_get_field(job, "desc") or _get_field(job, "description") or ""),
             "flags": [str(f) for f in flags_out if isinstance(f, str)],
             "risk": _get_field(job, "risk") if _get_field(job, "risk") in ("Low", "Medium", "High") else "Low",
@@ -241,30 +251,114 @@ def build_evidence(jobs, local, trend_growth, forum, degraded) -> dict:
     return copy.deepcopy(evidence)
 
 
+_NEGATIONS = frozenset({"no", "not", "never", "isn't", "aren't", "without"})
+_NEGATION_RE = re.compile(r"[A-Za-z']+")
+
+
+def _in_negated_scope(text_before_match: str) -> bool:
+    """True when a negation scopes over the upcoming match.
+
+    A match is left unchanged when a negation word (no/not/never/isn't/...)  occurs within the 3 words directly before it, or anywhere earlier in the
+    same sentence (sentences split on `.`, `!`, `?`). The sentence scope keeps
+    denials such as "No guaranteed income here; risk-free is bad" intact
+    instead of garbling them into promises.
+    """
+    words = _NEGATION_RE.findall(text_before_match.lower())
+    if any(word in _NEGATIONS or word.endswith("n't") for word in words[-3:]):
+        return True
+    segment = re.split(r"[.!?\n]+", text_before_match)[-1].lower()
+    seg_words = _NEGATION_RE.findall(segment)
+    return any(word in _NEGATIONS or word.endswith("n't") for word in seg_words)
+
+
 def _sanitize_promises(text: str) -> tuple[str, bool]:
+    """Replace promise language, leaving negated phrases ("no guaranteed...") intact."""
     replaced = False
     out = text
     for pattern, replacement in _PROMISE_RULES:
-        new_out, count = pattern.subn(replacement, out)
-        if count:
+        parts: list[str] = []
+        cursor = 0
+        for match in pattern.finditer(out):
+            if _in_negated_scope(out[: match.start()]):
+                continue
+            parts.append(out[cursor : match.start()])
+            parts.append(replacement)
+            cursor = match.end()
             replaced = True
-            out = new_out
+        if cursor:
+            parts.append(out[cursor:])
+            out = "".join(parts)
     return out, replaced
 
 
+def _evidence_tokens(evidence_text_lower: str) -> set[str]:
+    """Tokenise evidence into whole lowercase words/numbers (no substrings)."""
+    return set(_TOKEN_RE.findall(evidence_text_lower))
+
+
 def _is_grounded(evidence_str: str, evidence_text_lower: str) -> bool:
+    """True with >=1 shared number or >=2 distinct shared non-stopword words."""
     if not evidence_str or not evidence_text_lower:
         return False
-    lowered = evidence_str.lower()
-    for number in _NUMBER_RE.findall(evidence_str):
-        if number in evidence_text_lower:
-            return True
-    for word in _WORD_RE.findall(lowered):
-        if word in _STOPWORDS:
-            continue
-        if word in evidence_text_lower:
-            return True
-    return False
+    tokens = _evidence_tokens(evidence_text_lower)
+    numbers = set(re.findall(r"\d+", evidence_str))
+    if numbers & tokens:
+        return True
+    words = {
+        word
+        for word in _ITEM_WORD_RE.findall(evidence_str.lower())
+        if len(word) >= 2 and word not in _STOPWORDS
+    }
+    return len(words & tokens) >= 2
+
+
+def _repair_evidence(ev_list: list[str], evidence: dict) -> list[str] | None:
+    """Pad a single surviving evidence string to 2 with a signals-built line.
+
+    Returns the repaired list, or None when nothing honest can be built (the
+    item must then be dropped). Lines are deterministic facts from
+    ``market_signals`` only, never invented.
+    """
+    if len(ev_list) >= 2:
+        return ev_list[:3]
+    if len(ev_list) != 1:
+        return None
+    signals = evidence.get("market_signals") if isinstance(evidence, dict) else None
+    signals = signals if isinstance(signals, dict) else {}
+    try:
+        jobs = int(signals.get("job_count") or 0)
+    except (TypeError, ValueError):
+        jobs = 0
+    try:
+        local = int(signals.get("local_business_count") or 0)
+    except (TypeError, ValueError):
+        local = 0
+    try:
+        forum = int(signals.get("forum_result_count") or 0)
+    except (TypeError, ValueError):
+        forum = 0
+    if jobs > 0:
+        extra = f"{jobs} live job listings found for your search"
+    elif local > 0:
+        extra = f"{local} local businesses found near your city"
+    elif forum > 0:
+        extra = f"{forum} forum discussions found about this work"
+    else:
+        return None
+    logger.info("ranker: padded single evidence string with signals line")
+    return [ev_list[0], extra]
+
+
+def _repair_plan(plan_steps: list[str]) -> list[str]:
+    """Pad a 3-6 step plan to exactly 7 with generic, honest final steps."""
+    if len(plan_steps) >= 7:
+        return plan_steps[:7]
+    needed = 7 - len(plan_steps)
+    padded = list(plan_steps) + _PLAN_REPAIR_STEPS[:needed]
+    logger.info(
+        "ranker: padded plan_7_days from %d to 7 steps", len(plan_steps)
+    )
+    return padded
 
 
 def validate_opportunities(raw: dict, evidence: dict) -> list[dict]:
@@ -330,6 +424,12 @@ def validate_opportunities(raw: dict, evidence: dict) -> list[dict]:
             if isinstance(ev_item, str) and ev_item.strip():
                 ev_list.append(ev_item.strip())
         ev_list = ev_list[:3]
+        # Contract: 2-3 evidence strings. Repair a lone survivor from
+        # market signals; drop the item when nothing honest can be built.
+        repaired_ev = _repair_evidence(ev_list, evidence if isinstance(evidence, dict) else {})
+        if repaired_ev is None:
+            continue
+        ev_list = repaired_ev
 
         raw_plan = ai.plan_7_days
         plan_steps: list[str] = []
@@ -381,12 +481,14 @@ def validate_opportunities(raw: dict, evidence: dict) -> list[dict]:
             logger.info("ranker: removed pay-to-start step, trust lowered by 20")
         if len(filtered) < 3:
             continue
-        plan_steps = filtered[:7]
+        # Contract: exactly 7 steps. Repair 3-6 step plans with generic,
+        # honest final steps (fewer than 3 already dropped the item above).
+        plan_steps = _repair_plan(filtered[:7])
 
         grounded = any(_is_grounded(ev_text, evidence_text) for ev_text in ev_list)
         if not grounded:
             trust = max(0, trust - 15)
-            logger.info("ranker: ungrounded evidence, trust lowered by 15")
+        logger.info("ranker: grounded=%s title=%s", grounded, title)
 
         if "estimate" not in income.lower():
             income = income + " (estimate)"

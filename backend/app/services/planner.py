@@ -9,7 +9,6 @@ from app.errors import LLMError, LLMFormatError
 from app.prompts import PLANNER_MAX_TOKENS, PLANNER_SYSTEM, build_planner_user
 from app.schemas import Plan, Profile
 from app.services import llm as _llm_mod
-from app.services.llm import ask_json as _orig_ask_json
 from app.utils import clean_query, first_skill
 
 logger = logging.getLogger(__name__)
@@ -20,17 +19,10 @@ __all__ = [
     "fallback_plan",
 ]
 
-# Exposed for tests that monkeypatch ``app.services.planner.ask_json``.
-ask_json = _orig_ask_json
-_ORIG_ASK_JSON = _orig_ask_json
-
 
 async def _call_planner_ask(system: str, user: str) -> dict:
-    """Call ask_json, honouring patches on either planner or llm module."""
-    fn = globals().get("ask_json", _ORIG_ASK_JSON)
-    if fn is _ORIG_ASK_JSON:
-        fn = _llm_mod.ask_json
-    return await fn(system, user, PLANNER_MAX_TOKENS, label="planner")
+    """Call the shared LLM seam (tests patch ``app.services.llm.ask_json``)."""
+    return await _llm_mod.ask_json(system, user, PLANNER_MAX_TOKENS, label="planner")
 
 
 def _fallback_templates(profile: Profile) -> dict[str, Any]:
