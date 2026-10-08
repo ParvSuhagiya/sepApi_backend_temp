@@ -1,0 +1,20 @@
+# Environment files (never commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# SQLite cache (runtime artifact, rebuilt by prewarm)
+cache.db
+cache.db-wal
+cache.db-shm
+
+# Frontend
+node_modules/
+dist/

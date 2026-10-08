@@ -1,8 +1,13 @@
 .env
+.env.*
+!.env.example
 venv/
 .venv/
 cache.db
+cache.db-wal
+cache.db-shm
 __pycache__/
-.pytest_cache/
 *.pyc
-   
+.pytest_cache/
+node_modules/
+dist/
