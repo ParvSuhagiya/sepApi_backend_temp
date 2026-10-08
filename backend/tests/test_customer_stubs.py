@@ -1,9 +1,7 @@
-"""Prompt-3 placeholder modules (ranker, pipeline) import cleanly."""
+"""Prompt-3 placeholder module (pipeline) imports cleanly."""
 
 import app.modes.customers.pipeline as pipeline_module
-import app.modes.customers.ranker as ranker_module
 
 
-def test_placeholders_import() -> None:
+def test_placeholder_imports() -> None:
     assert pipeline_module.__all__ == []
-    assert ranker_module.__all__ == []
