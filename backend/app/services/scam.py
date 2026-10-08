@@ -15,13 +15,15 @@ Risk = Literal["Low", "Medium", "High"]
 
 RED_FLAGS: dict[str, re.Pattern[str]] = {
     "Asks for upfront fee": re.compile(
-        r"registration fee|security deposit|training fee|pay .{0,20}to (start|join)",
+        r"registration fee|security deposit|training fee|pay .{0,20}to (start|join)"
+        r"|refundable deposit|registration charges?|joining fee|training charges?"
+        r"|deposit .{0,20}to (start|join|begin)",
         re.IGNORECASE,
     ),
     "Unrealistic income promise": re.compile(
-        r"earn (up to )?.{0,30}?"
-        r"(?:\d{1,3}(?:,\d{3}){1,4}|\d{4,6}|\d{1,3}k|\d{1,2}(?:\.\d{1,2})? lakhs?)"
-        r".{0,15}?(per|/|a) (day|week)",
+        r"earn(?:ing|s)?\s+(?:up\s*to\s+|upto\s+)?.{0,30}?"
+        r"(?:\d{1,3}(?:,\d{3}){1,4}|\d{4,6}|\d{1,3}\s?k\b|\d{1,2}(?:\.\d{1,2})?\s?lakhs?)"
+        r".{0,15}?\s*(?:per|/|a|every)\s*(?:day|week)\b",
         re.IGNORECASE,
     ),
     "Personal email or chat-app contact": re.compile(
@@ -41,6 +43,23 @@ RED_FLAGS: dict[str, re.Pattern[str]] = {
     "Chat-app only application": re.compile(
         r"apply (only )?(on|via|through) (whatsapp|telegram)"
         r"|contact (only )?on (whatsapp|telegram)",
+        re.IGNORECASE,
+    ),
+    "Asks for ID or bank details up front": re.compile(
+        r"(?:aadhaar|aadhar|pan card|bank (account )?details|otp)"
+        r".{0,40}(?:send|share|submit|give)"
+        r"|(?:send|share|submit|give)"
+        r".{0,40}(?:aadhaar|aadhar|pan card|bank (account )?details|otp)",
+        re.IGNORECASE,
+    ),
+    "Chat-app contact": re.compile(
+        r"whatsapp (your )?(cv|resume)"
+        r"|(send|share) (your )?(cv|resume) (on|to) (whatsapp|telegram)",
+        re.IGNORECASE,
+    ),
+    "Asks for money in Hinglish": re.compile(
+        r"paisa bhej|pehle paisa|registration charge lag"
+        r"|ghar baithe .{0,20}(lakh|\d{4,6})",
         re.IGNORECASE,
     ),
 }

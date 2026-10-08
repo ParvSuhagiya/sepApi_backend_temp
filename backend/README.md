@@ -190,5 +190,14 @@ errors. Run the same command twice: the second run must show
 - SQLite resets on free-tier redeploys; re-run prewarm after each deploy.
 - Demand and Competition sub-scores are AI-estimated from evidence, while
   the final EarnScore formula and guardrails are deterministic.
-- Scam Shield is rule-based and English-only.
+- Scam Shield is a rule-based **signal, never a verdict**. It covers:
+  upfront fees (including refundable deposits, joining/training charges),
+  unrealistic daily/weekly income promises, personal-email or chat-app
+  contacts, no-interview/guaranteed-income claims, pay-to-start kits,
+  chat-app-only applications, up-front ID/bank-detail requests, CV-over-chat
+  requests, and a small Hinglish lure set. It does **not** cover: monthly
+  income claims, plain "processing fee" mentions (common in legitimate
+  banking/loan jobs), or any behaviour outside the listing text. Any
+  Telegram mention flags (even "we use Telegram internally"); verify before
+  paying or sharing documents.
 - Income figures are estimates, always labelled as estimates.
