@@ -3,14 +3,26 @@
 Usage:
     python -m scripts.prewarm [profiles.json]
 
-Default profile when no file is given:
+Default profiles when no file is given: three representative low-budget
+profiles plus the demo profile (the PRD personas were not available in the
+repo, so these stand-ins cover the same shapes: zero-budget services, a small
+budget, and food work):
+
     {"skills": "Python basics, Excel", "city": "Ahmedabad", "hours": 10, "budget": 0}
+    {"skills": "tailoring, stitching", "city": "Pune", "hours": 12, "budget": 0}
+    {"skills": "cooking, tiffin service", "city": "Mumbai", "hours": 20, "budget": 2000}
+    {"skills": "delivery, driving", "city": "Ahmedabad", "hours": 15, "budget": 0}
 
 The JSON file must contain a list of profile objects with
 skills/city/hours/budget keys. Per profile the script prints credits_used,
 cache_hits, opportunity count, degraded sources and wall time, and continues
-on per-profile errors. Run the same command twice: the second run must show
-0 credits because every SerpAPI response is served from cache.
+on per-profile errors.
+
+Demo readiness check: after warming, the script verifies that across all
+profiles at least one High-risk job was seen (Scam Shield demo), at least one
+place has a phone (WhatsApp demo), trend data is present, and that re-running
+the demo profile costs 0 credits (fully cached). It exits non-zero when the
+demo path is not ready.
 """
 
 from __future__ import annotations
@@ -24,7 +36,10 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 DEFAULT_PROFILES = [
-    {"skills": "Python basics, Excel", "city": "Ahmedabad", "hours": 10, "budget": 0}
+    {"skills": "Python basics, Excel", "city": "Ahmedabad", "hours": 10, "budget": 0},
+    {"skills": "tailoring, stitching", "city": "Pune", "hours": 12, "budget": 0},
+    {"skills": "cooking, tiffin service", "city": "Mumbai", "hours": 20, "budget": 2000},
+    {"skills": "delivery, driving", "city": "Ahmedabad", "hours": 15, "budget": 0},
 ]
 
 
@@ -57,6 +72,7 @@ async def prewarm_one(profile_data: dict) -> dict:
             "opportunities": len(result["opportunities"]),
             "degraded": result["meta"]["degraded"],
             "wall_ms": wall_ms,
+            "result": result,
         }
     except Exception as exc:
         wall_ms = int((time.perf_counter() - start) * 1000)
@@ -68,6 +84,38 @@ async def prewarm_one(profile_data: dict) -> dict:
         }
 
 
+def _demo_readiness(summaries: list[dict]) -> tuple[bool, list[str]]:
+    """Check the demo path across warmed profiles; return (ready, problems)."""
+    problems: list[str] = []
+    ok_results = [s["result"] for s in summaries if s.get("ok") and "result" in s]
+    if not ok_results:
+        return False, ["no profile warmed successfully"]
+
+    high_risk = any(
+        job.get("risk") == "High"
+        for result in ok_results
+        for job in result.get("jobs", [])
+        if isinstance(job, dict)
+    )
+    if not high_risk:
+        problems.append("no High-risk job found (Scam Shield demo needs one)")
+
+    with_phone = any(
+        place.get("phone")
+        for result in ok_results
+        for place in result.get("local", [])
+        if isinstance(place, dict)
+    )
+    if not with_phone:
+        problems.append("no place with a phone found (WhatsApp demo needs one)")
+
+    trend = any(result.get("trend") for result in ok_results)
+    if not trend:
+        problems.append("no trend data found")
+
+    return (not problems, problems)
+
+
 async def _main_async(profiles: list[dict]) -> int:
     from app.services.serp import close_serp, init_cache, init_serp
 
@@ -75,8 +123,10 @@ async def _main_async(profiles: list[dict]) -> int:
     await init_serp()
     try:
         failures = 0
+        summaries: list[dict] = []
         for item in profiles:
             summary = await prewarm_one(item)
+            summaries.append(summary)
             if summary["ok"]:
                 print(
                     "profile skills={skills!r} city={city!r} "
@@ -101,7 +151,29 @@ async def _main_async(profiles: list[dict]) -> int:
                         ms=summary["wall_ms"],
                     )
                 )
-        return 1 if failures else 0
+        if failures:
+            print(f"demo readiness: NOT READY ({failures} profile(s) failed)")
+            return 1
+
+        ready, problems = _demo_readiness(summaries)
+        for problem in problems:
+            print(f"demo readiness: missing {problem}")
+
+        # Repeat the demo profile: every SerpAPI response must come from cache.
+        repeat = await prewarm_one(profiles[0])
+        repeat_credits = repeat.get("credits_used", -1)
+        print(f"demo readiness: repeat run credits_used={repeat_credits}")
+        if repeat_credits != 0:
+            problems.append(
+                f"repeat run cost {repeat_credits} credits (expected 0)"
+            )
+            ready = False
+
+        if ready:
+            print("demo readiness: READY")
+            return 0
+        print("demo readiness: NOT READY")
+        return 1
     finally:
         await close_serp()
 

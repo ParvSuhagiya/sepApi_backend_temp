@@ -64,6 +64,7 @@ Copy-Item .env.example .env
 | `APP_ENV` | `development` | no | Set `production` on Render. Enables docs lockdown and detail-health lockdown. |
 | `ENABLE_DOCS` | auto (`true` unless production) | no | Set `true`/`false` to override the interactive docs (`/docs`, `/openapi.json`). Disable in production. |
 | `SCORE_MODE` | `blend` | no | `blend` averages AI and deterministic signals; `ai` keeps raw AI values |
+| `RANK_CACHE_HOURS` | `0` (off) | no | When > 0, cache final ranked responses by profile+evidence hash |
 | `LLM_TIMEOUT_SECONDS` | `60` | no | Per-call Claude timeout |
 | `SERP_TIMEOUT_SECONDS` | `40` | no | Per-call SerpAPI timeout |
 | `LOG_LEVEL` | `INFO` | no | Root log level |
