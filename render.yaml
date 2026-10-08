@@ -38,3 +38,13 @@ services:
         sync: false
       - key: LOG_LEVEL
         sync: false
+      - key: ENABLE_CUSTOMER_MODE
+        sync: false
+      - key: LEAD_RESEARCH_TOP_N
+        sync: false
+      - key: MAX_LEAD_SERP_CALLS_PER_REQUEST
+        sync: false
+      - key: MAX_LEAD_SERP_CALLS_PER_DAY
+        sync: false
+      - key: LEADS_REQUEST_DEADLINE_SECONDS
+        sync: false

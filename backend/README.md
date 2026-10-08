@@ -68,6 +68,11 @@ Copy-Item .env.example .env
 | `LLM_TIMEOUT_SECONDS` | `60` | no | Per-call Claude timeout |
 | `SERP_TIMEOUT_SECONDS` | `40` | no | Per-call SerpAPI timeout |
 | `LOG_LEVEL` | `INFO` | no | Root log level |
+| `ENABLE_CUSTOMER_MODE` | `true` | no | Mode 2 "customers" (find customer businesses for a product owner) |
+| `LEAD_RESEARCH_TOP_N` | `5` | no | How many discovered leads get deep research (hard cap 8) |
+| `MAX_LEAD_SERP_CALLS_PER_REQUEST` | `12` | no | Max live SerpAPI calls per customer-mode request |
+| `MAX_LEAD_SERP_CALLS_PER_DAY` | `150` | no | Daily SerpAPI sub-budget for customer mode (`0` = unlimited; shares the existing global SerpAPI day counter but is tracked separately) |
+| `LEADS_REQUEST_DEADLINE_SECONDS` | `45` | no | Wall-clock deadline per customer-mode request |
 
 ## Run
 

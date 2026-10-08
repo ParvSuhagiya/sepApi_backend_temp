@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     llm_timeout_seconds: int = 60
     serp_timeout_seconds: int = 40
     log_level: str = "INFO"
+    enable_customer_mode: bool = True
+    lead_research_top_n: int = 5
+    max_lead_serp_calls_per_request: int = 12
+    max_lead_serp_calls_per_day: int = 150
+    leads_request_deadline_seconds: int = 45
 
     @property
     def docs_enabled(self) -> bool:
