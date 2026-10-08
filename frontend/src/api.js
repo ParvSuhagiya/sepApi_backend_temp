@@ -1,7 +1,7 @@
 /**
  * Backend API client. Never surfaces raw upstream text: every failure is
  * mapped to a friendly message. Retries once on network failure or 502
- * (Render cold start) for /api/search.
+ * (Render cold start) for /api/search and /api/leads.
  */
 
 const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -90,6 +90,10 @@ async function request(path, body, { retry = false } = {}) {
 
 export function search(profile) {
   return request("/api/search", profile, { retry: true });
+}
+
+export function leads(offerInput) {
+  return request("/api/leads", offerInput, { retry: true });
 }
 
 export function outreach(profile, target) {

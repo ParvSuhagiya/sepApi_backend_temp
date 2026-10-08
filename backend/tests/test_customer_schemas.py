@@ -227,6 +227,21 @@ def test_leads_response_defaults_disclaimer_and_rejects_extras() -> None:
             }
         )
     with pytest.raises(ValidationError):
-        Lead.model_validate({**_lead_data(), "phone": "+91"})
-    with pytest.raises(ValidationError):
         LeadMeta.model_validate({"credits_used": 0, "cache_hits": 0, "bogus": 1})
+
+
+def test_lead_accepts_contact_and_signal_fields() -> None:
+    """Prompt 4 needs phone/maps_url/breakdown on Lead; extras still rejected."""
+    lead = Lead.model_validate(
+        {
+            **_lead_data(),
+            "phone": "+91",
+            "maps_url": "https://maps.google.com/?q=x",
+            "score_breakdown": {"mid_level": 80.0},
+            "likely_has_software": True,
+            "adjustments": ["Hard to reach: no public phone or website"],
+        }
+    )
+    assert lead.phone == "+91"
+    with pytest.raises(ValidationError):
+        Lead.model_validate({**_lead_data(), "phone_number": "+91"})

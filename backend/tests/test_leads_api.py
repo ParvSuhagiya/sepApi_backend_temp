@@ -151,6 +151,8 @@ def test_leads_happy_path_shape(live_leads, caplog) -> None:
         "name", "address", "rating", "user_ratings_total", "business_type",
         "match_score", "match_reasons", "research_notes",
         "why_fit", "pitch_angle", "suggested_first_question",
+        "phone", "maps_url", "price_level", "score_breakdown",
+        "likely_has_software", "adjustments",
     }
     assert set(payload["meta"]) == {
         "credits_used", "cache_hits", "degraded", "partial", "notes", "timings_ms",

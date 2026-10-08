@@ -246,6 +246,12 @@ def _assemble_leads(state: _State, city: str) -> list[dict]:
                     "pitch_angle": getattr(annotation, "pitch_angle", None) or None,
                     "suggested_first_question": getattr(annotation, "suggested_first_question", None)
                     or None,
+                    "phone": place.phone,
+                    "maps_url": place.maps_url,
+                    "price_level": place.price_level,
+                    "score_breakdown": dict(result.breakdown),
+                    "likely_has_software": place.likely_has_software,
+                    "adjustments": list(result.adjustments),
                 }
             )
         except Exception:

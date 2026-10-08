@@ -2,7 +2,7 @@ import { useState } from "react";
 import { outreach } from "../api.js";
 import { waLink } from "../lib/whatsapp.js";
 
-export default function OutreachButton({ profile, place }) {
+export default function OutreachButton({ profile, place, productSummary }) {
   const [state, setState] = useState("idle"); // idle | drafting | drafted | error
   const [draft, setDraft] = useState("");
   const [safetyNote, setSafetyNote] = useState("");
@@ -14,12 +14,16 @@ export default function OutreachButton({ profile, place }) {
   async function handleDraft() {
     setState("drafting");
     try {
-      const result = await outreach(profile, {
+      const target = {
         name: place.name,
         type: place.type,
         address: place.address,
         rating: place.rating,
-      });
+      };
+      // Customer mode: the product summary switches the backend to the
+      // lead-outreach draft. The phone is never sent.
+      if (productSummary) target.product_summary = productSummary;
+      const result = await outreach(profile, target);
       setDraft(result.message);
       setSafetyNote(result.safety_note || "");
       setState("drafted");

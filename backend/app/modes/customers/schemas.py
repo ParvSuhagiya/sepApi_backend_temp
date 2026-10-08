@@ -189,6 +189,12 @@ class Lead(BaseModel):
     why_fit: str | None = Field(default=None, max_length=200)
     pitch_angle: str | None = Field(default=None, max_length=160)
     suggested_first_question: str | None = Field(default=None, max_length=120)
+    phone: str | None = Field(default=None, max_length=20)
+    maps_url: str | None = Field(default=None, max_length=500)
+    price_level: int | None = Field(default=None, ge=1, le=4)
+    score_breakdown: dict[str, float] = Field(default_factory=dict)
+    likely_has_software: bool = False
+    adjustments: list[str] = Field(default_factory=list)
 
     @field_validator("match_reasons", mode="after")
     @classmethod

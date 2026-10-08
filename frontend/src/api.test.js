@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, outreach, search } from "./api.js";
+import { ApiError, leads, outreach, search } from "./api.js";
 
 function jsonResponse(status, body, headers = {}) {
   return {
@@ -83,6 +83,75 @@ describe("api.js", () => {
       await outreach({ skills: "x" }, { name: "S" });
       expect.unreachable();
     } catch (err) {
+      expect(err.message).toBe("We couldn't finish this search. Please try again in a minute.");
+    }
+  });
+});
+
+describe("leads()", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  const input = { offer: "restaurant billing software for dine-in places", city: "Ahmedabad" };
+
+  it("posts the offer to /api/leads and returns the payload", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { leads: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(leads(input)).resolves.toEqual({ leads: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/leads$/);
+    expect(JSON.parse(options.body)).toEqual(input);
+  });
+
+  it("parses Retry-After for 429", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          429,
+          { error: { code: "budget_exhausted", message: "tired", request_id: "r3" } },
+          { "Retry-After": "60" }
+        )
+      )
+    );
+    try {
+      await leads(input);
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err.code).toBe("budget_exhausted");
+      expect(err.retryAfter).toBe(60);
+      expect(err.message).toMatch(/60 seconds/);
+    }
+  });
+
+  it("retries once on 502 then succeeds", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(502, { error: { code: "x", message: "y", request_id: "r" } }))
+      .mockResolvedValueOnce(jsonResponse(200, { leads: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(leads(input)).resolves.toEqual({ leads: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("never shows raw upstream text on 500", async () => {
+    const fakeSecret = ["sk", "live", "leak"].join("-");
+    const keyName = ["SERP", "API", "KEY"].join("");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(500, { error: { code: "internal", message: `${keyName}=${fakeSecret}`, request_id: "r" } })
+      )
+    );
+    try {
+      await leads(input);
+      expect.unreachable();
+    } catch (err) {
+      expect(err.message).not.toContain(fakeSecret);
       expect(err.message).toBe("We couldn't finish this search. Please try again in a minute.");
     }
   });

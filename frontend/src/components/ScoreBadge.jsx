@@ -6,14 +6,14 @@ const styles = {
   red: "bg-red-700 text-white",
 };
 
-export default function ScoreBadge({ score }) {
+export default function ScoreBadge({ score, label = "EarnScore" }) {
   const tone = scoreColor(score);
   return (
     <span
       className={`inline-flex min-h-[40px] min-w-[64px] flex-col items-center justify-center rounded-md px-2 py-1 text-sm font-bold ${styles[tone]}`}
     >
       <span>{score}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-wide">EarnScore</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
     </span>
   );
 }
