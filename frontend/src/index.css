@@ -1,9 +1,189 @@
 @import 'tailwindcss';
 
-/* Design tokens land here in step 1.2. This base keeps Tailwind v4
-   preflight plus a sane default surface behind the app shell. */
+/* ---------------------------------------------------------------------------
+ * EarnRadar design tokens. Semantic colors are CSS variables so light and
+ * dark themes switch by flipping [data-theme] on <html> (set pre-paint by
+ * public/theme-init.js). Utilities reference the vars via @theme inline.
+ * ------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-focus: var(--focus);
+
+  --color-tone-green-bg: var(--tone-green-bg);
+  --color-tone-green-fg: var(--tone-green-fg);
+  --color-tone-green-border: var(--tone-green-border);
+  --color-tone-amber-bg: var(--tone-amber-bg);
+  --color-tone-amber-fg: var(--tone-amber-fg);
+  --color-tone-amber-border: var(--tone-amber-border);
+  --color-tone-red-bg: var(--tone-red-bg);
+  --color-tone-red-fg: var(--tone-red-fg);
+  --color-tone-red-border: var(--tone-red-border);
+  --color-tone-info-bg: var(--tone-info-bg);
+  --color-tone-info-fg: var(--tone-info-fg);
+  --color-tone-info-border: var(--tone-info-border);
+}
+
+@theme {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --shadow-sm: 0 1px 2px rgb(2 6 23 / 0.06);
+  --shadow-md:
+    0 4px 12px -2px rgb(2 6 23 / 0.08),
+    0 2px 4px -2px rgb(2 6 23 / 0.06);
+  --shadow-lg:
+    0 12px 32px -8px rgb(2 6 23 / 0.16),
+    0 4px 8px -4px rgb(2 6 23 / 0.08);
+}
+
+:root {
+  color-scheme: light;
+
+  --surface: #f1f5f9;
+  --raised: #ffffff;
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #e2e8f0;
+
+  --brand: #4f46e5;
+  --brand-ink: #ffffff;
+  --focus: #4f46e5;
+
+  --tone-green-bg: #15803d;
+  --tone-green-fg: #ffffff;
+  --tone-green-border: #166534;
+  --tone-amber-bg: #fef3c7;
+  --tone-amber-fg: #78350f;
+  --tone-amber-border: #b45309;
+  --tone-red-bg: #b91c1c;
+  --tone-red-fg: #ffffff;
+  --tone-red-border: #991b1b;
+  --tone-info-bg: #eff6ff;
+  --tone-info-fg: #1e40af;
+  --tone-info-border: #93c5fd;
+
+  --z-header: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface: #020617;
+  --raised: #0f172a;
+  --ink: #f1f5f9;
+  --muted: #94a3b8;
+  --line: #1e293b;
+
+  --brand: #818cf8;
+  --brand-ink: #ffffff;
+  --focus: #a5b4fc;
+
+  --tone-green-bg: #166534;
+  --tone-green-fg: #ffffff;
+  --tone-green-border: #15803d;
+  --tone-amber-bg: #451a03;
+  --tone-amber-fg: #fcd34d;
+  --tone-amber-border: #92400e;
+  --tone-red-bg: #991b1b;
+  --tone-red-fg: #ffffff;
+  --tone-red-border: #b91c1c;
+  --tone-info-bg: #172554;
+  --tone-info-fg: #bfdbfe;
+  --tone-info-border: #1d4ed8;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md:
+    0 4px 12px -2px rgb(0 0 0 / 0.5),
+    0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg:
+    0 12px 32px -8px rgb(0 0 0 / 0.6),
+    0 4px 8px -4px rgb(0 0 0 / 0.5);
+}
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+/* Visible focus ring on every interactive element. Components must never
+   remove outlines without providing an equivalent indicator. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Brand gradient: hero and primary CTA only. White text stays >= 4.5:1
+   across the whole ramp (indigo-600 -> teal-700). */
+.brand-gradient {
+  background-image: linear-gradient(135deg, #4f46e5 0%, #0f766e 100%);
+}
+
+/* Result reveal motion. */
+@keyframes er-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: er-fade-up var(--motion-base) var(--motion-ease) both;
+}
+
+/* Skeleton shimmer. */
+@keyframes er-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    100deg,
+    var(--line) 40%,
+    var(--raised) 50%,
+    var(--line) 60%
+  );
+  background-size: 200% 100%;
+  animation: er-shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-reveal {
+    animation: none;
+  }
 }
