@@ -7,6 +7,8 @@ import pytest
 
 from app.budget import reset_budgets, reset_clock
 from app.config import get_settings
+from app.modes.customers.breaker import reset_breakers
+from app.modes.customers.breaker import reset_clock as reset_breaker_clock
 
 
 @pytest.fixture(autouse=True)
@@ -19,9 +21,13 @@ def configured_test_environment(
     get_settings.cache_clear()
     reset_budgets()
     reset_clock()
+    reset_breakers()
+    reset_breaker_clock()
     yield
     reset_budgets()
     reset_clock()
+    reset_breakers()
+    reset_breaker_clock()
     get_settings.cache_clear()
 
 

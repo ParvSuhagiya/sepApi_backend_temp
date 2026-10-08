@@ -17,7 +17,8 @@ import unicodedata
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
-from app.errors import AllSourcesFailed
+from app.errors import AllSourcesFailed, SerpError
+from app.modes.customers import breaker as _breaker_mod
 from app.modes.customers.schemas import LeadPlan, LeadPlace
 from app.services import serp as _serp_mod
 from app.services.serp import is_no_results_error
@@ -298,12 +299,24 @@ async def _fetch_query(
     semaphore: asyncio.Semaphore, query: str
 ) -> dict | BaseException:
     async with semaphore:
+        if not _breaker_mod.allow(MAPS_ENGINE):
+            return SerpError("Search provider short-circuited after repeated failures")
         try:
-            return await _serp_mod.serp(MAPS_ENGINE, q=query, type="search")
+            result = await _serp_mod.serp(MAPS_ENGINE, q=query, type="search")
         except asyncio.CancelledError:
             raise  # deadlines must propagate, never become partial data
         except BaseException as exc:  # noqa: BLE001 - gathered below
+            _breaker_mod.record_failure(MAPS_ENGINE)
             return exc
+        if (
+            isinstance(result, dict)
+            and "error" in result
+            and not is_no_results_error(result)
+        ):
+            _breaker_mod.record_failure(MAPS_ENGINE)
+        else:
+            _breaker_mod.record_success(MAPS_ENGINE)
+        return result
 
 
 async def discover(plan: LeadPlan) -> DiscoveryResult:

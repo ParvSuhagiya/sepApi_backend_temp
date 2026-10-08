@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 
 from app.config import get_settings
 from app.data.software_vendors import KNOWN_SOFTWARE_VENDORS
+from app.errors import SerpError
+from app.modes.customers import breaker as _breaker_mod
 from app.modes.customers.constants import LEAD_RESEARCH_TOP_N_CAP
 from app.modes.customers.schemas import LeadPlace, LeadPlan
 from app.services import llm as _llm_mod
@@ -272,12 +274,24 @@ async def _fetch_reviews(
     semaphore: asyncio.Semaphore, place_id: str
 ) -> dict | BaseException:
     async with semaphore:
+        if not _breaker_mod.allow(REVIEWS_ENGINE):
+            return SerpError("Search provider short-circuited after repeated failures")
         try:
-            return await _serp_mod.serp(REVIEWS_ENGINE, place_id=place_id)
+            result = await _serp_mod.serp(REVIEWS_ENGINE, place_id=place_id)
         except asyncio.CancelledError:
             raise  # deadlines must propagate, never become partial data
         except BaseException as exc:  # noqa: BLE001 - classified below
+            _breaker_mod.record_failure(REVIEWS_ENGINE)
             return exc
+        if (
+            isinstance(result, dict)
+            and "error" in result
+            and not is_no_results_error(result)
+        ):
+            _breaker_mod.record_failure(REVIEWS_ENGINE)
+        else:
+            _breaker_mod.record_success(REVIEWS_ENGINE)
+        return result
 
 
 async def research_leads(
@@ -372,13 +386,22 @@ async def _research_market(
     plan: LeadPlan, monthly_price: int | None
 ) -> tuple[list[str], str]:
     """ONE competitor search + ONE AI call; failures yield ([], note)."""
+    if not _breaker_mod.allow(MARKET_ENGINE):
+        logger.warning("market research short-circuited")
+        return [], "market_unavailable"
     try:
         payload = await _serp_mod.serp(MARKET_ENGINE, q=plan.competitor_query, num=5)
     except Exception:
         logger.warning("market research search failed")
+        _breaker_mod.record_failure(MARKET_ENGINE)
         return [], "market_unavailable"
     if not isinstance(payload, dict):
+        _breaker_mod.record_failure(MARKET_ENGINE)
         return [], "market_unavailable"
+    if "error" in payload and not is_no_results_error(payload):
+        _breaker_mod.record_failure(MARKET_ENGINE)
+        return [], "market_unavailable"
+    _breaker_mod.record_success(MARKET_ENGINE)
     results = payload.get("organic_results")
     if not isinstance(results, list):
         results = payload.get("forum_results")
