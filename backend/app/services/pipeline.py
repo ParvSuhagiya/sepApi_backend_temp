@@ -11,7 +11,7 @@ from app.errors import AllSourcesFailed, RankingFailed, UpstreamFailure
 from app.observability import redact
 from app.schemas import Opportunity, Profile
 from app.services.cleaning import clean_forum, clean_jobs, clean_places, choose_trend
-from app.services.geocode import attach_job_coords
+from app.services.geocode import attach_job_coords, geocode_city
 from app.services.outreach import draft_outreach
 from app.services.planner import make_plan
 from app.services.ranker import build_evidence, rank
@@ -127,6 +127,12 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
     except Exception:
         # Geocoding must never fail the request; pins just stay empty.
         logger.warning("geocode jobs failed; continuing without coordinates")
+    try:
+        center = await geocode_city(city)
+    except Exception:
+        center = None
+        logger.warning("geocode city failed; continuing without a map centre")
+    city_center = {"lat": center[0], "lng": center[1]} if center else None
     trend, trend_keyword, trend_growth = choose_trend(plan.trend_keywords, trend_responses)
     forum = clean_forum(forum_responses)
 
@@ -199,6 +205,7 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
             "degraded": degraded,
             "partial": partial,
             "notes": notes,
+            "city_center": city_center,
         },
     }
 

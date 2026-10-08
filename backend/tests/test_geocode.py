@@ -403,3 +403,60 @@ async def test_search_attaches_job_coords(
     assert result["jobs"][0]["lat"] == 18.5204
     assert result["jobs"][0]["lng"] == 73.8567
     assert result["jobs"][0]["geo_precision"] == "city"
+    assert result["meta"]["city_center"] == {"lat": 18.5204, "lng": 73.8567}
+
+
+async def test_search_city_center_none_when_geocoding_off(
+    monkeypatch: pytest.MonkeyPatch, tmp_cache_path
+) -> None:
+    """Default (disabled) geocoding leaves pins and map centre empty."""
+    import json
+    from pathlib import Path
+
+    import app.services.llm as llm_module
+    import app.services.pipeline as pipeline_module
+    import app.services.serp as serp_module
+    from app.schemas import Profile
+
+    async def fake_ask_json(system, user, max_tokens, *, temperature=0.2, label="llm"):
+        if label == "planner":
+            return {
+                "job_queries": ["tailoring jobs", "stitching jobs"],
+                "local_queries": ["tailoring in Pune", "boutiques in Pune"],
+                "trend_keywords": ["tailoring", "stitching"],
+                "forum_query": "tailoring earnings India",
+            }
+        path = Path(__file__).resolve().parent / "fixtures" / "ai" / "good_opportunities.json"
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    async def fake_serp(engine: str, **params):
+        if engine == "google_jobs":
+            return {
+                "jobs_results": [
+                    {
+                        "title": "Tailor needed",
+                        "company_name": "ABC",
+                        "location": "Pune",
+                        "description": "Stitching work",
+                    }
+                ]
+            }
+        return {"local_results": []}
+
+    monkeypatch.setattr(llm_module, "ask_json", fake_ask_json)
+    monkeypatch.setattr(pipeline_module, "serp", fake_serp)
+    get_settings.cache_clear()
+    serp_module.init_cache(tmp_cache_path)
+    try:
+        # No respx active: any real upstream call would hit the network and
+        # fail the run, proving geocoding stays silent when disabled.
+        result = await pipeline_module.run_search(
+            Profile.model_validate(
+                {"skills": "tailoring", "city": "Pune", "hours": 10, "budget": 0}
+            )
+        )
+    finally:
+        get_settings.cache_clear()
+        serp_module.close_cache()
+    assert result["jobs"][0]["lat"] is None
+    assert result["meta"]["city_center"] is None
