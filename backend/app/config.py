@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     max_lead_serp_calls_per_request: int = 12
     max_lead_serp_calls_per_day: int = 150
     leads_request_deadline_seconds: int = 45
+    rate_limit_leads_per_hour: int = 5
+    leads_cache_hours: int = 6
 
     @property
     def docs_enabled(self) -> bool:

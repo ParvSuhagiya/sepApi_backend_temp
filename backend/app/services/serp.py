@@ -26,9 +26,14 @@ _SERPI_BUDGET_EXHAUSTED_MESSAGE = (
     "Daily search budget exhausted. Cached results are still served; "
     "please try again tomorrow."
 )
+_LEADS_BUDGET_EXHAUSTED_MESSAGE = (
+    "Our daily leads budget is exhausted. Cached results are still served; "
+    "please try again tomorrow."
+)
 
 __all__ = [
     "request_stats",
+    "leads_live_blocked",
     "new_request_stats",
     "lifetime_stats",
     "cache_entry_count",
@@ -44,6 +49,8 @@ __all__ = [
     "rank_cache_key",
     "rank_cache_get",
     "rank_cache_set",
+    "leads_cache_get",
+    "leads_cache_set",
 ]
 
 SERP_BASE_URL = "https://serpapi.com/search.json"
@@ -56,6 +63,11 @@ _RETRY_BACKOFF_SECONDS = 0.5
 _CACHE_MAX_BYTES = 50 * 1024 * 1024
 
 request_stats: ContextVar[dict | None] = ContextVar("serp_request_stats", default=None)
+
+#: When True, live SerpAPI calls are refused (cache hits still served).
+#: Set per-request by the customer-mode pipeline when its day sub-budget
+#: is exhausted. Untouched (False) everywhere else, including income mode.
+leads_live_blocked: ContextVar[bool] = ContextVar("leads_live_blocked", default=False)
 
 _LOCK = threading.Lock()
 _DB_PATH: str | None = None
@@ -498,6 +510,18 @@ async def serp(engine: str, **params: Any) -> dict:
                 return payload
         # expired or corrupt -> fall through to live fetch
 
+    # Cache miss: leads day sub-budget short-circuit. Cache hits above stay
+    # free; when the customer-mode sub-budget is exhausted, live calls raise
+    # so the pipeline degrades to cached data instead of spending budget.
+    try:
+        if leads_live_blocked.get():
+            logger.warning("leads day sub-budget exhausted; refusing live call")
+            raise SerpError(_LEADS_BUDGET_EXHAUSTED_MESSAGE)
+    except SerpError:
+        raise
+    except Exception:
+        pass
+
     # Cache miss: enforce the global daily credit budget. Cache hits above
     # stay free; live calls raise so the pipeline degrades instead of failing.
     try:
@@ -574,3 +598,43 @@ def _silence_unretrieved(future: asyncio.Future) -> None:
             future.exception()
     except Exception:
         pass
+
+
+def leads_cache_get(key: str) -> dict | None:
+    """Return a cached customer-mode response dict, or None on miss/expiry."""
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        cur = conn.execute(
+            "SELECT v, created_at, ttl FROM rank_cache WHERE k = ?", (key,)
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    try:
+        if time.time() - float(row[1]) >= float(row[2]):
+            return None
+        payload = json.loads(row[0])
+    except (TypeError, ValueError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def leads_cache_set(key: str, payload: dict, ttl_seconds: float) -> None:
+    """Store a customer-mode response dict for ``ttl_seconds``."""
+    try:
+        blob = json.dumps(payload, ensure_ascii=False, default=str)
+        ttl = float(ttl_seconds)
+    except (TypeError, ValueError):
+        return
+    if ttl <= 0:
+        return
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        conn.execute(
+            "INSERT OR REPLACE INTO rank_cache(k, v, created_at, ttl)"
+            " VALUES(?, ?, ?, ?)",
+            (key, blob, time.time(), ttl),
+        )
+        conn.commit()

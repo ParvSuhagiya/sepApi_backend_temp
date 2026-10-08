@@ -274,6 +274,8 @@ async def _fetch_reviews(
     async with semaphore:
         try:
             return await _serp_mod.serp(REVIEWS_ENGINE, place_id=place_id)
+        except asyncio.CancelledError:
+            raise  # deadlines must propagate, never become partial data
         except BaseException as exc:  # noqa: BLE001 - classified below
             return exc
 

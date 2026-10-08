@@ -73,6 +73,8 @@ Copy-Item .env.example .env
 | `MAX_LEAD_SERP_CALLS_PER_REQUEST` | `12` | no | Max live SerpAPI calls per customer-mode request |
 | `MAX_LEAD_SERP_CALLS_PER_DAY` | `150` | no | Daily SerpAPI sub-budget for customer mode (`0` = unlimited; shares the existing global SerpAPI day counter but is tracked separately) |
 | `LEADS_REQUEST_DEADLINE_SECONDS` | `45` | no | Wall-clock deadline per customer-mode request |
+| `RATE_LIMIT_LEADS_PER_HOUR` | `5` | no | Per-IP leads limit (separate bucket from search) |
+| `LEADS_CACHE_HOURS` | `6` | no | Customer-mode response cache TTL (`0` = off; hits report `credits_used == 0`) |
 
 ## Run
 

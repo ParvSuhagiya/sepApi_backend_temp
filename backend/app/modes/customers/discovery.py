@@ -300,6 +300,8 @@ async def _fetch_query(
     async with semaphore:
         try:
             return await _serp_mod.serp(MAPS_ENGINE, q=query, type="search")
+        except asyncio.CancelledError:
+            raise  # deadlines must propagate, never become partial data
         except BaseException as exc:  # noqa: BLE001 - gathered below
             return exc
 

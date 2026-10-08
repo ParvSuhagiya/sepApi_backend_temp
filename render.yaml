@@ -48,3 +48,7 @@ services:
         sync: false
       - key: LEADS_REQUEST_DEADLINE_SECONDS
         sync: false
+      - key: RATE_LIMIT_LEADS_PER_HOUR
+        sync: false
+      - key: LEADS_CACHE_HOURS
+        sync: false

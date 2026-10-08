@@ -1,7 +1,9 @@
-"""Prompt-3 placeholder module (pipeline) imports cleanly."""
+"""Pipeline module exposes the customer-mode entry points."""
 
 import app.modes.customers.pipeline as pipeline_module
 
 
-def test_placeholder_imports() -> None:
-    assert pipeline_module.__all__ == []
+def test_pipeline_surface() -> None:
+    assert callable(pipeline_module.run_leads)
+    assert callable(pipeline_module.normalise_request_key)
+    assert callable(pipeline_module.reset_leads_state)

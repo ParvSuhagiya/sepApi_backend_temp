@@ -22,9 +22,8 @@ __all__ = [
 ]
 
 DISCLAIMER = (
-    "These leads are signals, not guarantees. "
-    "Verify each business independently before contacting. "
-    "Nothing is auto-sent; outreach drafts need human review."
+    "Lead scores are signals from public data, not guarantees. "
+    "Verify details before contacting."
 )
 
 #: Offers with more than this share of non-letter characters are rejected
@@ -187,6 +186,9 @@ class Lead(BaseModel):
     match_score: int = Field(ge=0, le=100)
     match_reasons: list[str] = Field(min_length=1, max_length=3)
     research_notes: str | None = Field(default=None, max_length=500)
+    why_fit: str | None = Field(default=None, max_length=200)
+    pitch_angle: str | None = Field(default=None, max_length=160)
+    suggested_first_question: str | None = Field(default=None, max_length=120)
 
     @field_validator("match_reasons", mode="after")
     @classmethod
