@@ -7,17 +7,35 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         working-directory: backend
-        run: pip install -r requirements.txt
-      - name: Run tests
+        run: |
+          pip install -r requirements.txt
+          pip install "ruff==0.14.9" "mypy==1.18.2" "pytest-cov==7.0.0" "pip-audit==2.9.0"
+      - name: Ruff lint (new package)
         working-directory: backend
-        run: pytest -q
+        run: python -m ruff check app/modes
+      - name: Ruff format check (new package)
+        working-directory: backend
+        run: python -m ruff format --check app/modes
+      - name: Mypy (new package, non-strict)
+        working-directory: backend
+        run: python -m mypy app/modes
+      - name: Run tests with coverage gate
+        working-directory: backend
+        run: python -m pytest -q --cov=app/modes/customers --cov-fail-under=85
+      - name: Dependency audit (non-blocking report)
+        working-directory: backend
+        continue-on-error: true
+        run: pip-audit --desc on || true
 
   frontend:
     runs-on: ubuntu-latest
@@ -38,6 +56,6 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
-      - name: Ensure no API keys in bundle
+      - name: Ensure no API keys in source or bundle
         working-directory: frontend
-        run: "! grep -rn 'sk-\|SERPAPI_KEY\|ANTHROPIC_API_KEY' src dist || (echo 'API key found in frontend' && exit 1)"
+        run: "! grep -rn 'sk-\\|AIza\\|gsk_\\|SERPAPI\\|API_KEY' src dist || (echo 'API key found in frontend' && exit 1)"

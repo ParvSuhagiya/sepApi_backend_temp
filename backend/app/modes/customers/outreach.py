@@ -26,9 +26,7 @@ __all__ = [
 ]
 
 #: Polite opt-out appended deterministically when the draft lacks one.
-OPT_OUT_LINE = (
-    "If this isn't relevant, just let me know and I won't message again."
-)
+OPT_OUT_LINE = "If this isn't relevant, just let me know and I won't message again."
 
 #: Core draft budget; the opt-out line (13 words) fits inside 70 total.
 CORE_WORD_BUDGET = 57

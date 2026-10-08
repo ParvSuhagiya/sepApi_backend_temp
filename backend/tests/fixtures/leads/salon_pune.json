@@ -1,0 +1,79 @@
+{
+  "offer": "i made a salon booking app with appointment slots, staff rosters and membership packages for neighbourhood salons. 600 rupees/month. target salons with three or more chairs",
+  "city": "Pune",
+  "monthly_price": 600,
+  "places": [
+    {
+      "title": "Enrich Salon Baner",
+      "address": "Baner, Pune",
+      "rating": 4.2,
+      "reviews": 450,
+      "price_level": "$$",
+      "phone": "+91 98222 22222",
+      "type": "Salon",
+      "place_id": "pune-s1"
+    },
+    {
+      "title": "Green Trends Kothrud",
+      "address": "Kothrud, Pune",
+      "rating": 4.1,
+      "reviews": 720,
+      "price_level": "$$",
+      "phone": "+91 98765 77777",
+      "type": "Salon",
+      "place_id": "pune-s2"
+    },
+    {
+      "title": "Mirror Mirror Wakad",
+      "address": "Wakad, Pune",
+      "rating": 4.3,
+      "reviews": 190,
+      "price_level": 2,
+      "phone": "+91 98222 33333",
+      "type": "Salon",
+      "place_id": "pune-s3"
+    },
+    {
+      "title": "Blush Boutique Salon",
+      "address": "Viman Nagar, Pune",
+      "rating": 4.5,
+      "reviews": 260,
+      "price_level": "$$$",
+      "phone": "+91 98222 44444",
+      "type": "Salon",
+      "place_id": "pune-s4"
+    },
+    {
+      "title": "Snip Story",
+      "address": "Hadapsar, Pune",
+      "rating": 3.9,
+      "reviews": 120,
+      "price_level": 1,
+      "type": "Salon",
+      "place_id": "pune-s5"
+    }
+  ],
+  "keep": ["pune-s1", "pune-s3", "pune-s4", "pune-s5"],
+  "ai_response": {
+    "leads": [
+      {
+        "id": "lead_0",
+        "why_fit": "Rated 4.2 from 450 reviews; appointment no-shows cost chair time.",
+        "pitch_angle": "Fill chairs with online bookings.",
+        "suggested_first_question": "How do you handle appointment no-shows?"
+      },
+      {
+        "id": "lead_1",
+        "why_fit": "Rated 4.3 from 190 reviews; roster gaps on weekends.",
+        "pitch_angle": "Roster staff around peak hours.",
+        "suggested_first_question": "How do you roster staff on weekends?"
+      },
+      {
+        "id": "lead_2",
+        "why_fit": "Rated 4.5 from 260 reviews; top rated, memberships can lock in regulars.",
+        "pitch_angle": "Sell memberships that bring regulars back.",
+        "suggested_first_question": "Do you sell membership packages today?"
+      }
+    ]
+  }
+}

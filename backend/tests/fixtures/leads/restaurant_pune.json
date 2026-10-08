@@ -1,0 +1,86 @@
+{
+  "offer": "i am a devops engineer and i have made a restaurant management system: manager assigns customers, waiter takes order, cook prepares food, waiter serves, manager handles bills. 800 rupees/month. target mid level restaurants that have waiter, manager, cook",
+  "city": "Pune",
+  "monthly_price": 800,
+  "places": [
+    {
+      "title": "Vaishali Restaurant",
+      "address": "FC Road, Pune",
+      "rating": 4.4,
+      "reviews": 890,
+      "price_level": "$$",
+      "phone": "+91 98220 11111",
+      "website": "https://vaishali.example.com",
+      "type": "Restaurant",
+      "place_id": "pune-r1"
+    },
+    {
+      "title": "Hotel Aurora Family Resto",
+      "address": "Baner Road, Pune",
+      "rating": 3.8,
+      "reviews": 140,
+      "price_level": "moderate",
+      "phone": "+91 98220 22222",
+      "type": "Restaurant",
+      "place_id": "pune-r2"
+    },
+    {
+      "title": "KFC Koregaon Park",
+      "address": "Koregaon Park, Pune",
+      "rating": 4.0,
+      "reviews": 3200,
+      "price_level": "$$",
+      "phone": "+91 98765 11111",
+      "type": "Fast food",
+      "place_id": "pune-r3"
+    },
+    {
+      "title": "Irani Cafe Goodluck",
+      "address": "Deccan, Pune",
+      "rating": 4.3,
+      "reviews": 1500,
+      "price_level": 1,
+      "type": "Cafe",
+      "place_id": "pune-r4"
+    },
+    {
+      "title": "Sukanta Thali House",
+      "address": "Kothrud, Pune",
+      "rating": 4.1,
+      "reviews": 410,
+      "price_level": "₹200-400",
+      "phone": "+91 98220 33333",
+      "type": "Restaurant",
+      "place_id": "pune-r5"
+    }
+  ],
+  "keep": ["pune-r1", "pune-r2", "pune-r4", "pune-r5"],
+  "ai_response": {
+    "leads": [
+      {
+        "id": "lead_0",
+        "why_fit": "Rated 4.4 from 890 reviews; busy tables need fast billing.",
+        "pitch_angle": "Cut billing errors and save staff time.",
+        "suggested_first_question": "How do you handle billing errors today?"
+      },
+      {
+        "id": "lead_1",
+        "why_fit": "Rated 3.8 from 140 reviews; family restaurant with room to systematise.",
+        "pitch_angle": "Simple billing that staff learn in a day.",
+        "suggested_first_question": "What slows down billing during rush hours?"
+      },
+      {
+        "id": "lead_2",
+        "why_fit": "Rated 4.3 from 1500 reviews; iconic cafe with steady billing load.",
+        "pitch_angle": "Handle rush-hour billing without errors.",
+        "suggested_first_question": "How do you track daily sales today?"
+      },
+      {
+        "id": "lead_3",
+        "why_fit": "Rated 4.1 from 410 reviews; thali house where order mix-ups cost money.",
+        "pitch_angle": "Fewer wrong orders, faster bills.",
+        "suggested_first_question": "How often do order mix-ups happen?"
+      }
+    ]
+  }
+}

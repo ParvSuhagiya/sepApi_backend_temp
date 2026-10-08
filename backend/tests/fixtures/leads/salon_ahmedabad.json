@@ -1,0 +1,86 @@
+{
+  "offer": "i made a salon booking app with appointment slots, staff rosters and membership packages for neighbourhood salons. 600 rupees/month. target salons with three or more chairs",
+  "city": "Ahmedabad",
+  "monthly_price": 600,
+  "places": [
+    {
+      "title": "Glow Studio Naranpura",
+      "address": "Naranpura, Ahmedabad",
+      "rating": 4.4,
+      "reviews": 210,
+      "price_level": "$$",
+      "phone": "+91 98220 88888",
+      "type": "Salon",
+      "place_id": "ahm-s1"
+    },
+    {
+      "title": "Lakme Salon Satellite",
+      "address": "Satellite, Ahmedabad",
+      "rating": 4.3,
+      "reviews": 980,
+      "price_level": "$$$",
+      "phone": "+91 98765 66666",
+      "type": "Salon",
+      "place_id": "ahm-s2"
+    },
+    {
+      "title": "Hair Affair Maninagar",
+      "address": "Maninagar, Ahmedabad",
+      "rating": 4.0,
+      "reviews": 167,
+      "price_level": 2,
+      "phone": "+91 98220 99999",
+      "type": "Salon",
+      "place_id": "ahm-s3"
+    },
+    {
+      "title": "Curl Up Unisex Salon",
+      "address": "Bodakdev, Ahmedabad",
+      "rating": 4.6,
+      "reviews": 340,
+      "price_level": "$$",
+      "phone": "+91 98221 11111",
+      "website": "https://curlup.example.com",
+      "type": "Salon",
+      "place_id": "ahm-s4"
+    },
+    {
+      "title": "Style Nest",
+      "address": "Paldi, Ahmedabad",
+      "rating": 3.7,
+      "reviews": 74,
+      "price_level": 1,
+      "type": "Salon",
+      "place_id": "ahm-s5"
+    }
+  ],
+  "keep": ["ahm-s1", "ahm-s3", "ahm-s4", "ahm-s5"],
+  "ai_response": {
+    "leads": [
+      {
+        "id": "lead_0",
+        "why_fit": "Rated 4.4 from 210 reviews; appointment no-shows cost chair time.",
+        "pitch_angle": "Fill chairs with online bookings.",
+        "suggested_first_question": "How do you handle appointment no-shows?"
+      },
+      {
+        "id": "lead_1",
+        "why_fit": "Rated 4.0 from 167 reviews; roster gaps on weekends.",
+        "pitch_angle": "Roster staff around peak hours.",
+        "suggested_first_question": "How do you roster staff on weekends?"
+      },
+      {
+        "id": "lead_2",
+        "why_fit": "Rated 4.6 from 340 reviews; top rated, memberships can lock in regulars.",
+        "pitch_angle": "Sell memberships that bring regulars back.",
+        "suggested_first_question": "Do you sell membership packages today?"
+      },
+      {
+        "id": "lead_3",
+        "why_fit": "Rated 3.7 from 74 reviews; small salon that can grow on repeat visits.",
+        "pitch_angle": "Simple bookings that staff learn in a day.",
+        "suggested_first_question": "How do customers book today?"
+      }
+    ]
+  }
+}

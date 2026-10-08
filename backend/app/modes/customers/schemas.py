@@ -176,6 +176,7 @@ class LeadPlace(BaseModel):
 
 class Lead(BaseModel):
     """One candidate customer business. Scores are signals, not guarantees."""
+
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     name: str = Field(min_length=1, max_length=200)

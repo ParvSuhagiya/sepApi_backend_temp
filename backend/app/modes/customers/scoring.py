@@ -116,7 +116,9 @@ def score_review_count(count: int | None, bands: dict[str, float]) -> float:
         span = max(lo, 1.0)
         return REVIEWS_ZERO_SCORE + (100.0 - REVIEWS_ZERO_SCORE) * (count / span)
     over = (count - hi) / max(hi, 1.0)
-    return max(REVIEWS_HIGH_FLOOR, 100.0 - (100.0 - REVIEWS_HIGH_FLOOR) * min(over, 1.0))
+    return max(
+        REVIEWS_HIGH_FLOOR, 100.0 - (100.0 - REVIEWS_HIGH_FLOOR) * min(over, 1.0)
+    )
 
 
 def score_rating_value(rating: float | None, bands: dict[str, float]) -> float:
@@ -187,9 +189,23 @@ class LeadScore:
 
 
 def _clamp_0_100(value: object) -> int:
-    try:
-        number = int(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
+    if isinstance(value, bool):
+        number = int(value)
+    elif isinstance(value, float):
+        if value != value:  # NaN
+            return 0
+        try:
+            number = int(value)
+        except (OverflowError, ValueError):
+            return 0
+    elif isinstance(value, int):
+        number = value
+    elif isinstance(value, str):
+        try:
+            number = int(value.strip())
+        except (TypeError, ValueError):
+            return 0
+    else:
         return 0
     return max(0, min(100, number))
 

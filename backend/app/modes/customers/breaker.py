@@ -38,9 +38,13 @@ CIRCUIT_OPEN_SECONDS = 30.0
 _LOCK = threading.Lock()
 # engine -> {"failures": int, "window_start": float, "opened_until": float | None}
 _STATE: dict[str, dict[str, float | int | None]] = {}
-_CLOCK: Callable[[], _datetime.datetime] = lambda: _datetime.datetime.now(
-    _datetime.timezone.utc
-)
+
+
+def _utcnow() -> _datetime.datetime:
+    return _datetime.datetime.now(_datetime.timezone.utc)
+
+
+_CLOCK: Callable[[], _datetime.datetime] = _utcnow
 
 
 def set_clock(fn: Callable[[], _datetime.datetime]) -> None:
@@ -54,7 +58,7 @@ def reset_clock() -> None:
     """Restore the real UTC clock."""
     global _CLOCK
     with _LOCK:
-        _CLOCK = lambda: _datetime.datetime.now(_datetime.timezone.utc)  # noqa: E731
+        _CLOCK = _utcnow
 
 
 def _now() -> float:

@@ -416,7 +416,7 @@ def test_10_outreach_is_cleaned_and_phone_never_in_prompt(monkeypatch):
 def test_11_model_name_only_in_allowed_places():
     root = Path(__file__).resolve().parents[1]
     allowed = {"app/config.py", ".env.example", "README.md", "tests/test_ai_quality.py"}
-    skip_dirs = {"tests", ".pytest_cache", "__pycache__", ".git", "node_modules", ".venv", "venv"}
+    skip_dirs = {"tests", ".pytest_cache", "__pycache__", ".mypy_cache", ".git", "node_modules", ".venv", "venv"}
     offenders: list[str] = []
     for path in root.rglob("*"):
         if not path.is_file():

@@ -1,0 +1,79 @@
+{
+  "offer": "i built gym management software with membership billing, trainer scheduling and attendance tracking for neighbourhood gyms. 1200 rupees/month. target gyms with trainers and front desk staff",
+  "city": "Pune",
+  "monthly_price": 1200,
+  "places": [
+    {
+      "title": "Titan Fitness Baner",
+      "address": "Baner, Pune",
+      "rating": 4.1,
+      "reviews": 310,
+      "price_level": "$$",
+      "phone": "+91 98220 66666",
+      "type": "Gym",
+      "place_id": "pune-g1"
+    },
+    {
+      "title": "Anytime Fitness Hinjewadi",
+      "address": "Hinjewadi, Pune",
+      "rating": 4.0,
+      "reviews": 1500,
+      "price_level": "$$$",
+      "phone": "+91 98765 44444",
+      "type": "Gym",
+      "place_id": "pune-g2"
+    },
+    {
+      "title": "Talwalkars Kothrud",
+      "address": "Kothrud, Pune",
+      "rating": 3.9,
+      "reviews": 620,
+      "price_level": "$$",
+      "phone": "+91 98765 55555",
+      "type": "Gym",
+      "place_id": "pune-g3"
+    },
+    {
+      "title": "Metro Health Club",
+      "address": "Hadapsar, Pune",
+      "rating": 3.8,
+      "reviews": 205,
+      "price_level": 2,
+      "phone": "+91 98220 77777",
+      "type": "Gym",
+      "place_id": "pune-g4"
+    },
+    {
+      "title": "Flex Zone Gym",
+      "address": "Wakad, Pune",
+      "rating": 4.4,
+      "reviews": 132,
+      "price_level": 1,
+      "type": "Gym",
+      "place_id": "pune-g5"
+    }
+  ],
+  "keep": ["pune-g1", "pune-g4", "pune-g5"],
+  "ai_response": {
+    "leads": [
+      {
+        "id": "lead_0",
+        "why_fit": "Rated 4.1 from 310 reviews. Serves 9000 members citywide with manual billing.",
+        "pitch_angle": "Collect every membership fee on time.",
+        "suggested_first_question": "How do you chase late membership payments?"
+      },
+      {
+        "id": "lead_1",
+        "why_fit": "Rated 3.8 from 205 reviews; gym where fee follow-ups slip.",
+        "pitch_angle": "Roster trainers and track attendance in one place.",
+        "suggested_first_question": "How do you schedule trainers today?"
+      },
+      {
+        "id": "lead_2",
+        "why_fit": "Rated 4.4 from 132 reviews; compact gym, easy software switch.",
+        "pitch_angle": "Keep members coming back with follow-ups.",
+        "suggested_first_question": "How do you follow up with inactive members?"
+      }
+    ]
+  }
+}

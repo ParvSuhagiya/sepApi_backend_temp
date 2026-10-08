@@ -28,7 +28,6 @@ import hashlib
 import logging
 import re
 import threading
-import time
 from dataclasses import dataclass, field
 
 from app.budget import remaining as _budget_remaining
@@ -41,10 +40,13 @@ from app.modes.customers import planner as _planner_mod
 from app.modes.customers import research as _research_mod
 from app.modes.customers import ranker as _ranker_mod
 from app.modes.customers import scoring as _scoring_mod
+from app.modes.customers.discovery import DiscoveryResult
+from app.modes.customers.research import ResearchResult
 from app.modes.customers.schemas import (
     DISCLAIMER,
     Lead,
     LeadPlace,
+    LeadPlan,
     LeadsResponse,
     OfferInput,
 )
@@ -81,10 +83,10 @@ _inflight: dict[str, tuple[asyncio.AbstractEventLoop, asyncio.Future]] = {}
 class _State:
     """Progressively filled stages; partial assembly reads what's present."""
 
-    plan: object = None
-    discovery: object = None
+    plan: LeadPlan | None = None
+    discovery: DiscoveryResult | None = None
     filtered: list = field(default_factory=list)  # [(LeadPlace, mid_level)]
-    research: object = None
+    research: ResearchResult | None = None
     market_notes: list[str] = field(default_factory=list)
     scored: list = field(default_factory=list)  # [(LeadPlace, mid, LeadScore)]
     texts: list = field(default_factory=list)  # [LeadAnnotation]
@@ -180,7 +182,9 @@ def _build_match_reasons(place: LeadPlace, city: str) -> list[str]:
             "Reviews or website mention existing vendor software (signal, not verified)"
         )
     if not reasons:
-        reasons.append(f"Listed on Google Maps in {city}" if city else "Listed on Google Maps")
+        reasons.append(
+            f"Listed on Google Maps in {city}" if city else "Listed on Google Maps"
+        )
     return [truncate(reason, 200) for reason in reasons[:3]]
 
 
@@ -244,7 +248,9 @@ def _assemble_leads(state: _State, city: str) -> list[dict]:
                     "research_notes": "; ".join(snippets)[:500] or None,
                     "why_fit": getattr(annotation, "why_fit", None) or None,
                     "pitch_angle": getattr(annotation, "pitch_angle", None) or None,
-                    "suggested_first_question": getattr(annotation, "suggested_first_question", None)
+                    "suggested_first_question": getattr(
+                        annotation, "suggested_first_question", None
+                    )
                     or None,
                     "phone": place.phone,
                     "maps_url": place.maps_url,
@@ -261,9 +267,7 @@ def _assemble_leads(state: _State, city: str) -> list[dict]:
     return leads
 
 
-async def _run_inner(
-    input: OfferInput, state: _State, stats: dict | None
-) -> dict:
+async def _run_inner(input: OfferInput, state: _State, stats: dict | None) -> dict:
     offer, city = input.offer, input.city
     blocked = _lead_sub_exhausted()
 
@@ -286,10 +290,7 @@ async def _run_inner(
             state.partial.append("maps")
 
     ranked = sorted(
-        (
-            (place, _scoring_mod.mid_level_signal(place))
-            for place in discovery.places
-        ),
+        ((place, _scoring_mod.mid_level_signal(place)) for place in discovery.places),
         key=lambda pair: pair[1],
         reverse=True,
     )
@@ -409,9 +410,7 @@ def _assemble_partial(state: _State, input: OfferInput, stats: dict | None) -> d
         _ranker_mod.deterministic_annotation(
             place,
             city=city,
-            default_pitch=state.plan.pitch_angle
-            if state.plan is not None
-            else "",
+            default_pitch=state.plan.pitch_angle if state.plan is not None else "",
             pains=list(state.plan.pain_keywords) if state.plan is not None else [],
         )
         for place, _mid, _result in state.scored
@@ -423,7 +422,9 @@ def _assemble_partial(state: _State, input: OfferInput, stats: dict | None) -> d
     leads = _assemble_leads(state, city)
     if not leads:
         raise AllSourcesFailed()
-    summary = state.plan.product_summary if state.plan is not None else input.offer[:300]
+    summary = (
+        state.plan.product_summary if state.plan is not None else input.offer[:300]
+    )
     return _response_dict(
         offer_summary=summary,
         leads=leads,
@@ -532,7 +533,10 @@ async def run_leads(input: OfferInput, *, request_id: str | None = None) -> dict
     if _response_cache_hours() > 0:
         try:
             await asyncio.to_thread(
-                _serp_mod.leads_cache_set, key, payload, _response_cache_hours() * 3600.0
+                _serp_mod.leads_cache_set,
+                key,
+                payload,
+                _response_cache_hours() * 3600.0,
             )
         except Exception:
             logger.warning("leads: response cache store failed")

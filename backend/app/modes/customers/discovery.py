@@ -215,7 +215,11 @@ def parse_maps_url(value: object) -> str | None:
         host = (urlsplit(cleaned).hostname or "").lower()
     except ValueError:
         return None
-    if host == "maps.app.goo.gl" or host == "google.com" or host.endswith(".google.com"):
+    if (
+        host == "maps.app.goo.gl"
+        or host == "google.com"
+        or host.endswith(".google.com")
+    ):
         return cleaned
     return None
 
@@ -335,9 +339,7 @@ async def discover(plan: LeadPlan) -> DiscoveryResult:
     for result in raw_results:
         if isinstance(result, BaseException):
             failed += 1
-            logger.warning(
-                "lead discovery fetch failed: %s", type(result).__name__
-            )
+            logger.warning("lead discovery fetch failed: %s", type(result).__name__)
         elif (
             isinstance(result, dict)
             and "error" in result

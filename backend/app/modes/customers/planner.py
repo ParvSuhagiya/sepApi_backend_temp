@@ -132,7 +132,9 @@ def fallback_lead_plan(offer: str, city: str) -> LeadPlan:
 
 async def _call_lead_planner_ask(system: str, user: str) -> dict:
     """Call the shared LLM seam (tests patch ``app.services.llm.ask_json``)."""
-    return await _llm_mod.ask_json(system, user, PLANNER_MAX_TOKENS, label="lead_planner")
+    return await _llm_mod.ask_json(
+        system, user, PLANNER_MAX_TOKENS, label="lead_planner"
+    )
 
 
 def _tolerant_str_list(value: Any) -> list[str]:
@@ -267,5 +269,7 @@ async def plan_leads(offer: str, city: str) -> LeadPlan:
     try:
         return _coerce_plan(raw, clean_offer, clean_city, fallback)
     except Exception:
-        logger.warning("lead planner: AI result unusable (coercion failed), using fallback")
+        logger.warning(
+            "lead planner: AI result unusable (coercion failed), using fallback"
+        )
         return fallback
