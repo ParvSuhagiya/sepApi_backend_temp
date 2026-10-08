@@ -107,6 +107,7 @@ class Opportunity(BaseModel):
     plan_7_days: list[str] = Field(min_length=7, max_length=7)
     earn_score: int
     score_breakdown: dict[str, float]
+    adjustments: list[str] = []
 
 
 class Job(BaseModel):

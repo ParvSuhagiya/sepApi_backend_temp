@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     max_llm_calls_per_day: int = 500
     app_env: str = "development"
     enable_docs: bool | None = None
+    score_mode: str = "blend"
     llm_timeout_seconds: int = 60
     serp_timeout_seconds: int = 40
     log_level: str = "INFO"

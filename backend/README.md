@@ -63,6 +63,7 @@ Copy-Item .env.example .env
 | `MAX_LLM_CALLS_PER_DAY` | `500` | no | Global daily Claude budget (`0` = unlimited). Exhaustion returns `429 budget_exhausted`. |
 | `APP_ENV` | `development` | no | Set `production` on Render. Enables docs lockdown and detail-health lockdown. |
 | `ENABLE_DOCS` | auto (`true` unless production) | no | Set `true`/`false` to override the interactive docs (`/docs`, `/openapi.json`). Disable in production. |
+| `SCORE_MODE` | `blend` | no | `blend` averages AI and deterministic signals; `ai` keeps raw AI values |
 | `LLM_TIMEOUT_SECONDS` | `60` | no | Per-call Claude timeout |
 | `SERP_TIMEOUT_SECONDS` | `40` | no | Per-call SerpAPI timeout |
 | `LOG_LEVEL` | `INFO` | no | Root log level |
@@ -99,8 +100,25 @@ python scripts/ai_smoke.py
 
 Without the key the script prints a skip message and exits 0.
 
-## API examples
+## Scoring and guardrails
 
+`EarnScore = 30% Demand + 20% Fit + 20% Trust + 15% Low competition + 15% Easy
+to start`, computed deterministically from the AI-estimated sub-scores.
+Demand, Competition and Trust themselves are AI-estimated from the collected
+evidence (job counts, trend growth, forum signals) — the README admits this
+honestly; the formula and guardrails are the deterministic part.
+
+- `SCORE_MODE=blend` (default): final Demand/Competition = 50% AI value +
+  50% deterministic signal (`signal_demand` blends capped trend growth, job
+  count and forum count; `signal_competition` blends Maps listing count and
+  average rating). `SCORE_MODE=ai` keeps the raw AI values.
+- Guardrails only ever cap downwards and every intervention is listed in the
+  opportunity's `adjustments` field (e.g. "Trust capped at 40: all matching
+  jobs show scam signals").
+- Job-type items additionally lose Trust in proportion to the share of
+  High-risk matching jobs (`TRUST_HIGH_RISK_SHARE_PENALTY = 15` at full share).
+
+## API examples
 Health:
 
 ```powershell
