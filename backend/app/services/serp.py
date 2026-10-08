@@ -35,10 +35,15 @@ __all__ = [
     "purge_expired",
     "enforce_cache_size_limit",
     "init_cache",
+    "close_cache",
     "init_serp",
     "close_serp",
     "serp",
     "cache_key",
+    "is_no_results_error",
+    "rank_cache_key",
+    "rank_cache_get",
+    "rank_cache_set",
 ]
 
 SERP_BASE_URL = "https://serpapi.com/search.json"
@@ -54,6 +59,11 @@ request_stats: ContextVar[dict | None] = ContextVar("serp_request_stats", defaul
 
 _LOCK = threading.Lock()
 _DB_PATH: str | None = None
+_CONN: sqlite3.Connection | None = None
+_WRITE_COUNT = 0
+_LAST_PURGE = 0.0
+_PURGE_EVERY_WRITES = 200
+_PURGE_EVERY_SECONDS = 3600.0
 _client: httpx.AsyncClient | None = None
 _lifetime: dict[str, int] = {"credits_used": 0, "cache_hits": 0}
 
@@ -83,13 +93,21 @@ def _ensure_parent(path: str) -> None:
         os.makedirs(parent, exist_ok=True)
 
 
-def _connect(path: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(path, timeout=30.0)
+def _open(path: str) -> sqlite3.Connection:
+    """Open the shared cache connection and initialise schema once."""
+    conn = sqlite3.connect(path, timeout=30.0, check_same_thread=False)
     try:
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute(
             "CREATE TABLE IF NOT EXISTS cache"
             "(k TEXT PRIMARY KEY, engine TEXT, v TEXT, created_at REAL, ttl REAL)"
+        )
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS rank_cache"
+            "(k TEXT PRIMARY KEY, v TEXT, created_at REAL, ttl REAL)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_cache_created ON cache(created_at)"
         )
         conn.commit()
     except Exception:
@@ -98,15 +116,25 @@ def _connect(path: str) -> sqlite3.Connection:
     return conn
 
 
+def _get_conn_locked() -> sqlite3.Connection:
+    assert _CONN is not None, "cache not initialised"
+    return _CONN
+
+
 def init_cache(path: str | None = None) -> str:
     """Initialise the SQLite cache database and return the path in use."""
-    global _DB_PATH
+    global _DB_PATH, _CONN, _LAST_PURGE
     resolved = _resolve_db_path(path)
     _ensure_parent(resolved)
     with _LOCK:
-        conn = _connect(resolved)
-        conn.close()
-    _DB_PATH = resolved
+        if _CONN is not None:
+            try:
+                _CONN.close()
+            except Exception:
+                pass
+            _CONN = None
+        _CONN = _open(resolved)
+        _DB_PATH = resolved
     try:
         removed_expired = purge_expired()
     except Exception:
@@ -115,6 +143,8 @@ def init_cache(path: str | None = None) -> str:
         removed_oversize = enforce_cache_size_limit()
     except Exception:
         removed_oversize = 0
+    with _LOCK:
+        _LAST_PURGE = time.time()
     if removed_expired or removed_oversize:
         logger.info(
             "cache startup cleanup expired=%d oversize=%d path=%s",
@@ -125,8 +155,20 @@ def init_cache(path: str | None = None) -> str:
     return resolved
 
 
+def close_cache() -> None:
+    """Close the shared cache connection (used on shutdown and in tests)."""
+    global _CONN
+    with _LOCK:
+        if _CONN is not None:
+            try:
+                _CONN.close()
+            except Exception:
+                pass
+            _CONN = None
+
+
 def _db_path_or_init() -> str:
-    if _DB_PATH is not None:
+    if _DB_PATH is not None and _CONN is not None:
         return _DB_PATH
     return init_cache()
 
@@ -153,7 +195,8 @@ def _ttl_for_engine(engine: str) -> float:
     return hours_f * 3600.0
 
 
-def _is_no_results_error(payload: dict[str, Any]) -> bool:
+def is_no_results_error(payload: dict[str, Any]) -> bool:
+    """True when a SerpAPI payload is the known benign "no results" message."""
     err = payload.get("error")
     if err is None:
         return False
@@ -161,68 +204,70 @@ def _is_no_results_error(payload: dict[str, Any]) -> bool:
     return _NO_RESULTS_MARKER.lower() in text.lower()
 
 
-# -- sync sqlite primitives (run under _LOCK, called via asyncio.to_thread) --
+# Backwards-compatible alias.
+_is_no_results_error = is_no_results_error
+
+
+# -- sync sqlite primitives (called with _LOCK held or via asyncio.to_thread) --
 
 def _read_row(key: str) -> tuple[str, str, float, float] | None:
-    path = _db_path_or_init()
+    _db_path_or_init()
     with _LOCK:
-        conn = _connect(path)
-        try:
-            cur = conn.execute(
-                "SELECT k, engine, v, created_at, ttl FROM cache WHERE k = ?", (key,)
-            )
-            row = cur.fetchone()
-            return row if row is None else (row[0], row[1], row[2], row[3], row[4])
-        finally:
-            conn.close()
+        conn = _get_conn_locked()
+        cur = conn.execute(
+            "SELECT k, engine, v, created_at, ttl FROM cache WHERE k = ?", (key,)
+        )
+        row = cur.fetchone()
+        return row if row is None else (row[0], row[1], row[2], row[3], row[4])
 
 
 def _write_row(key: str, engine: str, value: str, created_at: float, ttl: float) -> None:
-    path = _db_path_or_init()
+    global _WRITE_COUNT, _LAST_PURGE
+    _db_path_or_init()
     with _LOCK:
-        conn = _connect(path)
-        try:
-            conn.execute(
-                "INSERT OR REPLACE INTO cache(k, engine, v, created_at, ttl)"
-                " VALUES(?, ?, ?, ?, ?)",
-                (key, engine, value, created_at, ttl),
-            )
-            conn.commit()
-        finally:
-            conn.close()
+        conn = _get_conn_locked()
+        conn.execute(
+            "INSERT OR REPLACE INTO cache(k, engine, v, created_at, ttl)"
+            " VALUES(?, ?, ?, ?, ?)",
+            (key, engine, value, created_at, ttl),
+        )
+        conn.commit()
+        _WRITE_COUNT += 1
+        # Opportunistic expiry: every N writes or once an hour, not just startup.
+        if (
+            _WRITE_COUNT % _PURGE_EVERY_WRITES == 0
+            or time.time() - _LAST_PURGE > _PURGE_EVERY_SECONDS
+        ):
+            _purge_expired_locked()
+            _LAST_PURGE = time.time()
+
+
+def _purge_expired_locked() -> int:
+    """Delete expired rows with one statement; caller must hold _LOCK."""
+    conn = _get_conn_locked()
+    cur = conn.execute(
+        "DELETE FROM cache WHERE created_at IS NULL OR ttl IS NULL"
+        " OR created_at + ttl <= ?",
+        (time.time(),),
+    )
+    conn.commit()
+    return cur.rowcount if cur.rowcount is not None and cur.rowcount >= 0 else 0
 
 
 def cache_entry_count() -> int:
     """Return the number of rows currently in the cache."""
-    path = _db_path_or_init()
+    _db_path_or_init()
     with _LOCK:
-        conn = _connect(path)
-        try:
-            cur = conn.execute("SELECT COUNT(*) FROM cache")
-            row = cur.fetchone()
-            return int(row[0]) if row else 0
-        finally:
-            conn.close()
+        cur = _get_conn_locked().execute("SELECT COUNT(*) FROM cache")
+        row = cur.fetchone()
+        return int(row[0]) if row else 0
 
 
 def purge_expired() -> int:
     """Delete expired rows; return the number of rows removed."""
-    path = _db_path_or_init()
-    now = time.time()
+    _db_path_or_init()
     with _LOCK:
-        conn = _connect(path)
-        try:
-            cur = conn.execute("SELECT k, created_at, ttl FROM cache")
-            expired = [
-                r[0] for r in cur.fetchall()
-                if r[1] is None or r[2] is None or (float(r[1]) + float(r[2]) <= now)
-            ]
-            if expired:
-                conn.executemany("DELETE FROM cache WHERE k = ?", [(k,) for k in expired])
-                conn.commit()
-            return len(expired)
-        finally:
-            conn.close()
+        return _purge_expired_locked()
 
 
 def enforce_cache_size_limit(max_bytes: int = _CACHE_MAX_BYTES) -> int:
@@ -236,29 +281,72 @@ def enforce_cache_size_limit(max_bytes: int = _CACHE_MAX_BYTES) -> int:
         return 0
     removed = 0
     with _LOCK:
-        conn = _connect(path)
-        try:
-            while True:
-                try:
-                    size = os.path.getsize(path)
-                except OSError:
-                    break
-                if size <= max_bytes:
-                    break
-                cur = conn.execute(
-                    "SELECT k FROM cache ORDER BY created_at ASC LIMIT 100"
-                )
-                oldest = [row[0] for row in cur.fetchall()]
-                if not oldest:
-                    break
-                conn.executemany("DELETE FROM cache WHERE k = ?", [(k,) for k in oldest])
-                conn.commit()
-                removed += len(oldest)
-        finally:
-            conn.close()
+        conn = _get_conn_locked()
+        while True:
+            try:
+                size = os.path.getsize(path)
+            except OSError:
+                break
+            if size <= max_bytes:
+                break
+            cur = conn.execute(
+                "SELECT k FROM cache ORDER BY created_at ASC LIMIT 100"
+            )
+            oldest = [row[0] for row in cur.fetchall()]
+            if not oldest:
+                break
+            conn.executemany("DELETE FROM cache WHERE k = ?", [(k,) for k in oldest])
+            conn.commit()
+            removed += len(oldest)
     if removed:
         logger.info("cache size guard removed=%d max_bytes=%d", removed, max_bytes)
     return removed
+
+
+def rank_cache_key(profile: dict, evidence: dict) -> str:
+    """Hash of (profile, evidence) identifying a final ranked response."""
+    raw = json.dumps([profile, evidence], sort_keys=True, ensure_ascii=False, default=str)
+    return "rank:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def rank_cache_get(key: str) -> list | None:
+    """Return cached ranked opportunities, or None on miss/expiry/corruption."""
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        cur = conn.execute(
+            "SELECT v, created_at, ttl FROM rank_cache WHERE k = ?", (key,)
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    try:
+        if time.time() - float(row[1]) >= float(row[2]):
+            return None
+        payload = json.loads(row[0])
+    except (TypeError, ValueError):
+        return None
+    return payload if isinstance(payload, list) else None
+
+
+def rank_cache_set(key: str, ranked: list, ttl_seconds: float) -> None:
+    """Store ranked opportunities for ``ttl_seconds``."""
+    try:
+        blob = json.dumps(ranked, ensure_ascii=False, default=str)
+        ttl = float(ttl_seconds)
+    except (TypeError, ValueError):
+        return
+    if ttl <= 0:
+        return
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        conn.execute(
+            "INSERT OR REPLACE INTO rank_cache(k, v, created_at, ttl)"
+            " VALUES(?, ?, ?, ?)",
+            (key, blob, time.time(), ttl),
+        )
+        conn.commit()
 
 
 # -- counters --
@@ -454,6 +542,10 @@ async def serp(engine: str, **params: Any) -> dict:
                 _inflight.pop(key, None)
 
     # Credit is counted only after a successful SerpAPI JSON response.
+    # NOTE: SerpAPI's exact billing for errored/empty searches could not be
+    # confirmed offline, so this counter may over-report slightly versus the
+    # dashboard (it counts every successful HTTP 200 with parseable JSON,
+    # including "no results" payloads cached for 1h).
     _bump_credit()
 
     if "error" in payload:

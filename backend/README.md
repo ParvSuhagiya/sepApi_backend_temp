@@ -219,3 +219,7 @@ errors. Run the same command twice: the second run must show
   Telegram mention flags (even "we use Telegram internally"); verify before
   paying or sharing documents.
 - Income figures are estimates, always labelled as estimates.
+- The `credits_used` counter counts every successful SerpAPI JSON response
+  (including benign "no results" payloads). SerpAPI's exact billing for
+  errored and empty searches could not be confirmed offline, so the counter
+  may over-report slightly versus the SerpAPI dashboard.

@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     enable_docs: bool | None = None
     score_mode: str = "blend"
+    rank_cache_hours: int = 0
     llm_timeout_seconds: int = 60
     serp_timeout_seconds: int = 40
     log_level: str = "INFO"

@@ -15,7 +15,14 @@ from app.services.outreach import draft_outreach
 from app.services.planner import make_plan
 from app.services.ranker import build_evidence, rank
 from app.services.scoring import rank_opportunities
-from app.services.serp import new_request_stats, serp
+from app.services.serp import (
+    is_no_results_error,
+    new_request_stats,
+    rank_cache_get,
+    rank_cache_key,
+    rank_cache_set,
+    serp,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +55,11 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
 
     plan, used_fallback = await make_plan(profile)
 
+    # NOTE (Maps locality check): local queries always carry the city in the
+    # query text (the planner coerces it in), which is what SerpAPI's
+    # google_maps `type=search` uses for locality. A recorded-fixture review
+    # showed in-city addresses, and without geocoding we cannot supply the
+    # `ll` parameter, so no extra location parameter is sent.
     spec = [
         {"group": "jobs", "engine": "google_jobs", "params": {"q": plan.job_queries[0], "location": f"{city}, India", "hl": "en"}},
         {"group": "jobs", "engine": "google_jobs", "params": {"q": plan.job_queries[1], "location": f"{city}, India", "hl": "en"}},
@@ -71,13 +83,27 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
                 detail = type(result).__name__
             logger.warning("search fetch failed group=%s: %s", group, detail)
             grouped[group].append(None)
+        elif (
+            isinstance(result, dict)
+            and "error" in result
+            and not is_no_results_error(result)
+        ):
+            # SerpAPI errors can arrive as HTTP 200 with an "error" key. They
+            # count as failed calls for degraded/partial purposes and are kept
+            # out of cleaning. The benign "no results" message stays valid
+            # empty data.
+            logger.warning("search provider error payload group=%s", group)
+            grouped[group].append(None)
         else:
             grouped[group].append(result)
 
     degraded: list[str] = []
+    partial: list[str] = []
     for group, values in grouped.items():
         if values and all(value is None for value in values):
             degraded.append(group)
+        elif values and any(value is None for value in values):
+            partial.append(group)
 
     total_failed = sum(1 for values in grouped.values() for value in values if value is None)
     if total_failed == len(spec):
@@ -94,10 +120,31 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
     forum = clean_forum(forum_responses)
 
     evidence = build_evidence(jobs, places, trend_growth, forum, degraded)
-    opps = await rank(profile, evidence)
-    signals = {**evidence["market_signals"], "budget": profile.budget}
-    ranked = rank_opportunities(opps, signals, degraded)
-    ranked = _drop_invalid_opportunities(ranked)
+
+    from app.config import get_settings
+
+    try:
+        rank_ttl = float(get_settings().rank_cache_hours) * 3600.0
+    except (TypeError, ValueError):
+        rank_ttl = 0.0
+    rank_key: str | None = None
+    ranked: list[dict] | None = None
+    if rank_ttl > 0:
+        try:
+            profile_json = profile.model_dump(mode="json")
+        except Exception:
+            profile_json = {"skills": profile.skills, "city": profile.city}
+        rank_key = rank_cache_key(profile_json, evidence)
+        ranked = await asyncio.to_thread(rank_cache_get, rank_key)
+        if ranked is not None:
+            logger.info("rank cache hit; skipping AI ranking")
+    if ranked is None:
+        opps = await rank(profile, evidence)
+        signals = {**evidence["market_signals"], "budget": profile.budget}
+        ranked = rank_opportunities(opps, signals, degraded)
+        ranked = _drop_invalid_opportunities(ranked)
+        if rank_key is not None:
+            await asyncio.to_thread(rank_cache_set, rank_key, ranked, rank_ttl)
 
     notes: list[str] = []
     if len(ranked) < 5:
@@ -115,12 +162,13 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
         hits = 0
 
     logger.info(
-        "search done request_id=%s duration_ms=%d credits_used=%d cache_hits=%d degraded=%s planner_fallback=%s opportunities=%d",
+        "search done request_id=%s duration_ms=%d credits_used=%d cache_hits=%d degraded=%s partial=%s planner_fallback=%s opportunities=%d",
         rid,
         duration_ms,
         credits,
         hits,
         ",".join(degraded) if degraded else "-",
+        ",".join(partial) if partial else "-",
         used_fallback,
         len(ranked),
     )
@@ -138,6 +186,7 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
             "request_id": rid,
             "duration_ms": duration_ms,
             "degraded": degraded,
+            "partial": partial,
             "notes": notes,
         },
     }

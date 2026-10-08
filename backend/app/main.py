@@ -31,7 +31,7 @@ from app.security import (
 )
 from app.services import pipeline as _pipeline
 from app.services.outreach import SAFETY_NOTE
-from app.services.serp import close_serp, init_cache, init_serp
+from app.services.serp import close_cache, close_serp, init_cache, init_serp
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await close_serp()
+        close_cache()
 
 
 try:
