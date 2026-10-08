@@ -12,6 +12,7 @@ __all__ = [
     "LLMFormatError",
     "AllSourcesFailed",
     "RankingFailed",
+    "FeatureDisabled",
     "InternalError",
 ]
 
@@ -109,6 +110,14 @@ class RankingFailed(AppError):
     default_message = (
         "We could not build recommendations this time. Please try again."
     )
+
+
+class FeatureDisabled(AppError):
+    """The requested product mode is switched off on this deployment."""
+
+    code = "feature_disabled"
+    status = 404
+    default_message = "This feature is disabled."
 
 
 class InternalError(AppError):

@@ -20,7 +20,10 @@ from starlette.responses import Response
 from app.api.routes.health import router as health_router
 from app.budget import reset_budgets
 from app.config import get_settings
-from app.errors import AppError, RateLimited
+from app.errors import AppError, FeatureDisabled, InvalidInput, RateLimited
+from app.modes.customers import pipeline as _leads_pipeline
+from app.modes.customers.outreach import draft_lead_message as _draft_lead_message
+from app.modes.customers.schemas import LeadsResponse, OfferInput
 from app.observability import request_id_var, setup_logging
 from app.schemas import OutreachRequest, OutreachResponse, Profile, SearchResponse
 from app.security import (
@@ -39,12 +42,14 @@ _BODY_LIMIT_BYTES = 20 * 1024
 
 _search_limiter = SlidingWindowLimiter()
 _outreach_limiter = SlidingWindowLimiter()
+_leads_limiter = SlidingWindowLimiter()
 
 
 def reset_rate_limiters() -> None:
     """Clear in-memory rate-limit counters (used on startup and in tests)."""
     _search_limiter.reset()
     _outreach_limiter.reset()
+    _leads_limiter.reset()
     reset_auth_limiter()
     reset_budgets()
 
@@ -190,6 +195,15 @@ async def _enforce_outreach_limit(request: Request) -> None:
         raise RateLimited(retry_after=retry_after)
 
 
+async def _enforce_leads_limit(request: Request) -> None:
+    settings = get_settings()
+    allowed, retry_after = _leads_limiter.check(
+        f"leads:{client_ip(request)}", settings.rate_limit_leads_per_hour
+    )
+    if not allowed:
+        raise RateLimited(retry_after=retry_after)
+
+
 # NOTE: Starlette runs the last-registered "http" middleware first, so these
 # are registered bottom-up to execute in spec order:
 # request id -> body-size limit -> access log -> route.
@@ -326,5 +340,37 @@ async def api_outreach(body: OutreachRequest, request: Request) -> dict:
     """Draft a short outreach message for a profile/target pair."""
     await require_access_code(request)
     await _enforce_outreach_limit(request)
+    target = body.target if isinstance(body.target, dict) else {}
+    if "product_summary" in target:
+        # Lead outreach: the target is a customer-mode business plus the
+        # owner's product summary (validated, tagged as data, never trusted).
+        from app.utils import clean_query
+
+        raw_product = target.get("product_summary")
+        if (
+            not isinstance(raw_product, str)
+            or not raw_product.strip()
+            or len(raw_product.strip()) > 200
+        ):
+            raise InvalidInput("Invalid request: product_summary.")
+        product = clean_query(raw_product.strip(), 200)
+        message = await _draft_lead_message(target, product)
+        return {"message": message, "safety_note": SAFETY_NOTE}
     message = await _pipeline.draft_message(body.profile, body.target)
     return {"message": message, "safety_note": SAFETY_NOTE}
+
+
+@app.post("/api/leads", response_model=LeadsResponse)
+async def api_leads(body: OfferInput, request: Request) -> dict:
+    """Run the customer-mode pipeline for a product offer.
+
+    Body validation runs before this handler, so invalid (422) requests never
+    consume rate-limit quota. The feature flag is checked before the
+    access-code gate so a disabled mode stays silent.
+    """
+    if not get_settings().enable_customer_mode:
+        raise FeatureDisabled("Customer mode is disabled on this deployment.")
+    await require_access_code(request)
+    await _enforce_leads_limit(request)
+    rid = _request_id(request)
+    return await _leads_pipeline.run_leads(body, request_id=rid)
