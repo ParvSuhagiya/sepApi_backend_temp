@@ -116,6 +116,41 @@ def test_clean_places_never_raises_on_malformed_data() -> None:
     assert clean_places([]) == []
 
 
+def test_clean_places_pass_through_gps_coordinates() -> None:
+    places = clean_places([{"local_results": [
+        {
+            "title": "Sharma Tailoring",
+            "address": "MG Road Pune",
+            "gps_coordinates": {"latitude": 18.5204, "longitude": 73.8567},
+        },
+        {
+            "title": "No Coords Shop",
+            "address": "MG Road Pune",
+        },
+        {
+            "title": "Out Of Range Shop",
+            "address": "MG Road Pune",
+            "gps_coordinates": {"latitude": 91.0, "longitude": -181.0},
+        },
+        {
+            "title": "String Coords Shop",
+            "address": "MG Road Pune",
+            "gps_coordinates": {"latitude": "18.5", "longitude": "73.8"},
+        },
+        {
+            "title": "Bad Coords Shop",
+            "address": "MG Road Pune",
+            "gps_coordinates": {"latitude": "north", "longitude": None},
+        },
+    ]}])
+    assert len(places) == 5
+    assert (places[0].lat, places[0].lng) == (18.5204, 73.8567)
+    assert places[1].lat is None and places[1].lng is None
+    assert places[2].lat is None and places[2].lng is None  # out of range
+    assert (places[3].lat, places[3].lng) == (18.5, 73.8)
+    assert places[4].lat is None and places[4].lng is None
+
+
 # trends --------------------------------------------------------------------
 
 def test_build_trend_skips_malformed_points() -> None:

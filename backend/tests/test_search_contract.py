@@ -142,12 +142,18 @@ def test_search_response_shape_snapshot(monkeypatch) -> None:
         "degraded",
         "partial",
         "notes",
+        "city_center",
     }, sorted(body["meta"].keys())
     _assert_type(body["meta"]["request_id"], (str,), "meta.request_id")
     _assert_type(body["meta"]["duration_ms"], (int,), "meta.duration_ms")
     _assert_type(body["meta"]["degraded"], (list,), "meta.degraded")
     _assert_type(body["meta"]["partial"], (list,), "meta.partial")
     _assert_type(body["meta"]["notes"], (list,), "meta.notes")
+    if body["meta"]["city_center"] is not None:
+        _assert_type(body["meta"]["city_center"], (dict,), "meta.city_center")
+        assert set(body["meta"]["city_center"].keys()) == {"lat", "lng"}
+        _assert_type(body["meta"]["city_center"]["lat"], (float, int), "meta.city_center.lat")
+        _assert_type(body["meta"]["city_center"]["lng"], (float, int), "meta.city_center.lng")
 
     assert body["opportunities"], "expected at least one opportunity"
     for opp in body["opportunities"]:
@@ -187,6 +193,9 @@ def test_search_response_shape_snapshot(monkeypatch) -> None:
             "link",
             "flags",
             "risk",
+            "lat",
+            "lng",
+            "geo_precision",
         }, sorted(job.keys())
 
     assert body["local"], "expected at least one place"
@@ -198,6 +207,8 @@ def test_search_response_shape_snapshot(monkeypatch) -> None:
             "phone",
             "address",
             "type",
+            "lat",
+            "lng",
         }, sorted(place.keys())
 
     for point in body["trend"]:

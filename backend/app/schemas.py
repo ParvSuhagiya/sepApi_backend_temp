@@ -13,6 +13,7 @@ __all__ = [
     "Opportunity",
     "Job",
     "Place",
+    "CityCenter",
     "TrendPoint",
     "ForumItem",
     "Stats",
@@ -122,6 +123,9 @@ class Job(BaseModel):
     link: str | None = None
     flags: list[str]
     risk: Literal["Low", "Medium", "High"]
+    lat: float | None = None
+    lng: float | None = None
+    geo_precision: Literal["city", "approximate"] | None = None
 
 
 class Place(BaseModel):
@@ -133,6 +137,15 @@ class Place(BaseModel):
     phone: str | None = None
     address: str | None = None
     type: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+
+
+class CityCenter(BaseModel):
+    """Approximate map centre for the searched city (geocoded, cached)."""
+
+    lat: float
+    lng: float
 
 
 class TrendPoint(BaseModel):
@@ -165,6 +178,7 @@ class Meta(BaseModel):
     degraded: list[str]
     partial: list[str] = []
     notes: list[str] = []
+    city_center: CityCenter | None = None
 
 
 class SearchResponse(BaseModel):

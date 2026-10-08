@@ -7,6 +7,7 @@ have the wrong type, and malformed entries are skipped instead of raising.
 import math
 import re
 import unicodedata
+from typing import Any
 
 from app.schemas import ForumItem, Job, Place, TrendPoint
 from app.services.scam import scan_job
@@ -81,6 +82,26 @@ def _to_float(value: object) -> float | None:
     except (TypeError, ValueError, OverflowError):
         return None
     return number if math.isfinite(number) else None
+
+
+def _to_coord(value: object, lo: float, hi: float) -> float | None:
+    """Best-effort coordinate coercion; None when missing/unusable/out of range."""
+    number = _to_float(value)
+    if number is None or not lo <= number <= hi:
+        return None
+    return number
+
+
+def _gps_coords(item: dict) -> tuple[float | None, float | None]:
+    """Extract (lat, lng) from a SerpAPI gps_coordinates block or flat keys."""
+    source: Any = item.get("gps_coordinates")
+    if isinstance(source, dict):
+        lat_raw = source.get("latitude", source.get("lat"))
+        lng_raw = source.get("longitude", source.get("lng"))
+    else:
+        lat_raw = item.get("latitude", item.get("lat"))
+        lng_raw = item.get("longitude", item.get("lng"))
+    return _to_coord(lat_raw, -90.0, 90.0), _to_coord(lng_raw, -180.0, 180.0)
 
 
 def _build_job(item: dict) -> Job:
@@ -174,6 +195,8 @@ def _build_place(item: dict) -> Place:
     else:
         reviews = None
 
+    lat, lng = _gps_coords(item)
+
     return Place(
         name=_text(item.get("title")),
         rating=rating,
@@ -181,6 +204,8 @@ def _build_place(item: dict) -> Place:
         phone=_opt_text(item.get("phone")),
         address=_opt_text(item.get("address")),
         type=_opt_text(item.get("type")),
+        lat=lat,
+        lng=lng,
     )
 
 
