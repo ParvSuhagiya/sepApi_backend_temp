@@ -1,0 +1,73 @@
+{
+ "opportunities": [
+  {
+   "title": "",
+   "type": "freelance",
+   "why": "Empty title.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Bad type",
+   "type": "not-a-real-type",
+   "why": "Bad type.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Short plan",
+   "type": "job",
+   "why": "Too few steps.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "only one"
+   ]
+  },
+  "not-a-dict-item",
+  42,
+  null
+ ]
+}

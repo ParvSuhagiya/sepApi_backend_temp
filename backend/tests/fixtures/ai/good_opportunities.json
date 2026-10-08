@@ -1,0 +1,124 @@
+{
+ "opportunities": [
+  {
+   "title": "Home tailoring alterations",
+   "type": "local business",
+   "why": "Fits tailoring skills and needs no investment. Works within 10 hours a week in Pune.",
+   "income_estimate": "INR 8,000-15,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 85,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Freelance stitching gigs",
+   "type": "gig",
+   "why": "Uses stitching skill with zero startup cost. Flexible hours suit a 10 hour week in Pune.",
+   "income_estimate": "INR 6,000-12,000 per month (estimate)",
+   "demand": 65,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 70,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Boutique helper job",
+   "type": "job",
+   "why": "Matches tailoring skill and Pune location. Steady hours fit the stated availability.",
+   "income_estimate": "INR 10,000-18,000 per month (estimate)",
+   "demand": 60,
+   "competition": 40,
+   "fit": 70,
+   "cost_ease": 90,
+   "trust": 72,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Sell stitched blouses online",
+   "type": "reselling",
+   "why": "Turns stitching into products with low cost. Online selling suits beginners in India.",
+   "income_estimate": "INR 5,000-10,000 per month (estimate)",
+   "demand": 55,
+   "competition": 40,
+   "fit": 65,
+   "cost_ease": 90,
+   "trust": 68,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Stitching how-to videos",
+   "type": "youtube",
+   "why": "Uses existing skill to teach others. Content work fits flexible hours and zero budget.",
+   "income_estimate": "INR 3,000-8,000 per month (estimate)",
+   "demand": 58,
+   "competition": 40,
+   "fit": 75,
+   "cost_ease": 90,
+   "trust": 70,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  }
+ ]
+}

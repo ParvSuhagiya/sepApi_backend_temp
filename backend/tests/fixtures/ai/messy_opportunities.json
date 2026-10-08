@@ -1,0 +1,122 @@
+{
+ "opportunities": [
+  {
+   "title": "  Tailoring gig  ",
+   "type": "gig",
+   "why": "Fits tailoring skills in Pune with low cost.",
+   "income_estimate": "INR 8,000 per month",
+   "demand": "70",
+   "competition": "high",
+   "fit": -5,
+   "cost_ease": 140,
+   "trust": null,
+   "evidence": "Pune tailoring demand noted in listings",
+   "plan_7_days": [
+    "List services",
+    "",
+    null,
+    "Tell neighbours",
+    42,
+    "Do trial orders"
+   ],
+   "extra_unknown_field": {
+    "nested": true
+   }
+  },
+  {
+   "title": "",
+   "type": "job",
+   "why": "Missing title case.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Unknown thing",
+   "type": "unknown-thing-xyz",
+   "why": "Bad type case.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "List services",
+    "Price jobs",
+    "Tell neighbours",
+    "Post locally",
+    "Do trials",
+    "Get reviews",
+    "Repeat"
+   ]
+  },
+  {
+   "title": "Ecommerce test",
+   "type": "Ecommerce",
+   "why": "Synonym type normalises.",
+   "income_estimate": "INR 4,000 monthly",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune online sellers active",
+    "tailoring listings in Pune"
+   ],
+   "plan_7_days": [
+    "Pick products",
+    "Make samples",
+    "List online",
+    "Promote"
+   ]
+  },
+  {
+   "title": "Content test",
+   "type": "BLOGGING",
+   "why": "Uppercase synonym normalises.",
+   "income_estimate": "INR 3,000 monthly",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 75,
+   "evidence": [
+    "Pune blogging readers exist",
+    "tailoring guides shared in Pune"
+   ],
+   "plan_7_days": [
+    "Topic one",
+    "Topic two",
+    "Topic three",
+    "Topic four",
+    "Topic five",
+    "Topic six",
+    "Topic seven",
+    "Topic eight",
+    "Topic nine"
+   ]
+  }
+ ]
+}

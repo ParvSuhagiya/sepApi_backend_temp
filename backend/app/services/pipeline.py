@@ -7,9 +7,9 @@ import logging
 import time
 from uuid import uuid4
 
-from app.errors import AllSourcesFailed
+from app.errors import AllSourcesFailed, RankingFailed, UpstreamFailure
 from app.observability import redact
-from app.schemas import Profile
+from app.schemas import Opportunity, Profile
 from app.services.cleaning import clean_forum, clean_jobs, clean_places, choose_trend
 from app.services.outreach import draft_outreach
 from app.services.planner import make_plan
@@ -25,8 +25,22 @@ __all__ = [
 ]
 
 
+_SEARCH_TIMEOUT_SECONDS = 90.0
+
+
 async def run_search(profile: Profile, request_id: str | None = None) -> dict:
     """Plan, fetch 7 SerpAPI calls, clean, rank, score; return SearchResponse dict."""
+    try:
+        async with asyncio.timeout(_SEARCH_TIMEOUT_SECONDS):
+            return await _run_search_inner(profile, request_id=request_id)
+    except TimeoutError as exc:
+        logger.warning("search timed out after %.0fs", _SEARCH_TIMEOUT_SECONDS)
+        raise UpstreamFailure(
+            "The request took too long. Please try again shortly."
+        ) from exc
+
+
+async def _run_search_inner(profile: Profile, request_id: str | None = None) -> dict:
     start = time.perf_counter()
     stats = new_request_stats()
     rid = request_id or str(uuid4())
@@ -83,6 +97,7 @@ async def run_search(profile: Profile, request_id: str | None = None) -> dict:
     opps = await rank(profile, evidence)
     signals = {**evidence["market_signals"], "budget": profile.budget}
     ranked = rank_opportunities(opps, signals, degraded)
+    ranked = _drop_invalid_opportunities(ranked)
 
     duration_ms = int((time.perf_counter() - start) * 1000)
     try:
@@ -121,3 +136,22 @@ async def run_search(profile: Profile, request_id: str | None = None) -> dict:
 async def draft_message(profile: Profile, target: dict) -> str:
     """Draft an outreach message for a profile/target pair."""
     return await draft_outreach(profile, target)
+
+
+def _drop_invalid_opportunities(ranked: list[dict]) -> list[dict]:
+    """Keep only opportunities that satisfy the API schema.
+
+    The ranker is lenient by design (e.g. it may keep a single evidence
+    string), while SearchResponse requires 2-3. Dropping here instead of
+    failing keeps one thin item from turning into a 500; if nothing
+    survives, raise RankingFailed for a safe 502.
+    """
+    valid: list[dict] = []
+    for item in ranked:
+        try:
+            valid.append(Opportunity.model_validate(item).model_dump())
+        except Exception:
+            logger.warning("dropping opportunity that fails API validation")
+    if not valid:
+        raise RankingFailed()
+    return valid

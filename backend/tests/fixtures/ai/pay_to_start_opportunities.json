@@ -1,0 +1,26 @@
+{
+ "opportunities": [
+  {
+   "title": "Tailoring fee test",
+   "type": "freelance",
+   "why": "Fits tailoring skills in Pune with low cost.",
+   "income_estimate": "INR 8,000 per month (estimate)",
+   "demand": 70,
+   "competition": 40,
+   "fit": 80,
+   "cost_ease": 90,
+   "trust": 80,
+   "evidence": [
+    "Pune tailoring listings show steady demand",
+    "Forum notes tailoring rates in Pune"
+   ],
+   "plan_7_days": [
+    "Pay a registration fee of Rs 500 to start today",
+    "Tell 10 neighbours",
+    "Post in local groups",
+    "Do 2 trial orders",
+    "Ask for reviews"
+   ]
+  }
+ ]
+}

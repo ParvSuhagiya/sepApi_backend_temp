@@ -27,6 +27,7 @@ __all__ = [
     "lifetime_stats",
     "cache_entry_count",
     "purge_expired",
+    "enforce_cache_size_limit",
     "init_cache",
     "init_serp",
     "close_serp",
@@ -41,6 +42,7 @@ _NO_RESULTS_MARKER = "hasn't returned any results"
 _NO_RESULTS_TTL_SECONDS = 3600.0
 _DEFAULT_TTL_SECONDS = 24 * 3600.0
 _RETRY_BACKOFF_SECONDS = 0.5
+_CACHE_MAX_BYTES = 50 * 1024 * 1024
 
 request_stats: ContextVar[dict | None] = ContextVar("serp_request_stats", default=None)
 
@@ -93,6 +95,21 @@ def init_cache(path: str | None = None) -> str:
         conn = _connect(resolved)
         conn.close()
     _DB_PATH = resolved
+    try:
+        removed_expired = purge_expired()
+    except Exception:
+        removed_expired = 0
+    try:
+        removed_oversize = enforce_cache_size_limit()
+    except Exception:
+        removed_oversize = 0
+    if removed_expired or removed_oversize:
+        logger.info(
+            "cache startup cleanup expired=%d oversize=%d path=%s",
+            removed_expired,
+            removed_oversize,
+            resolved,
+        )
     return resolved
 
 
@@ -194,6 +211,42 @@ def purge_expired() -> int:
             return len(expired)
         finally:
             conn.close()
+
+
+def enforce_cache_size_limit(max_bytes: int = _CACHE_MAX_BYTES) -> int:
+    """Delete oldest rows while the DB file exceeds max_bytes; return rows removed."""
+    path = _db_path_or_init()
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        return 0
+    if size <= max_bytes:
+        return 0
+    removed = 0
+    with _LOCK:
+        conn = _connect(path)
+        try:
+            while True:
+                try:
+                    size = os.path.getsize(path)
+                except OSError:
+                    break
+                if size <= max_bytes:
+                    break
+                cur = conn.execute(
+                    "SELECT k FROM cache ORDER BY created_at ASC LIMIT 100"
+                )
+                oldest = [row[0] for row in cur.fetchall()]
+                if not oldest:
+                    break
+                conn.executemany("DELETE FROM cache WHERE k = ?", [(k,) for k in oldest])
+                conn.commit()
+                removed += len(oldest)
+        finally:
+            conn.close()
+    if removed:
+        logger.info("cache size guard removed=%d max_bytes=%d", removed, max_bytes)
+    return removed
 
 
 # -- counters --
