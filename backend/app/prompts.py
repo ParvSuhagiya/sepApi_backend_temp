@@ -10,6 +10,10 @@ __all__ = [
     "RANKER_RETRY_SUFFIX",
     "RANKER_MAX_TOKENS",
     "build_ranker_user",
+    "OUTREACH_SYSTEM",
+    "OUTREACH_SHORTEN_SUFFIX",
+    "OUTREACH_MAX_TOKENS",
+    "build_outreach_user",
 ]
 
 PLANNER_SYSTEM = (
@@ -104,3 +108,20 @@ def build_ranker_user(profile_json: str, evidence_json: str) -> str:
         + "trust drops when scam flags or negative forum signals exist.",
     ]
     return "\n".join(parts)
+
+
+OUTREACH_SYSTEM = (
+    "You write short, polite WhatsApp messages (max 70 words) from a job seeker "
+    "to a business or employer. Be specific, professional, no emojis, "
+    "no false claims. Do not claim experience the sender did not list. "
+    "Do not include links or phone numbers. Write the message only."
+)
+
+OUTREACH_SHORTEN_SUFFIX = "Rewrite it in under 70 words."
+
+OUTREACH_MAX_TOKENS = 500
+
+
+def build_outreach_user(profile_json: str, target_json: str) -> str:
+    """Build the outreach user prompt from sender and recipient JSON."""
+    return "Sender: " + profile_json + "\nRecipient: " + target_json
