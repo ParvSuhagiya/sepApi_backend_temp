@@ -32,6 +32,11 @@ jobs:
       - name: Run tests with coverage gate
         working-directory: backend
         run: python -m pytest -q --cov=app/modes/customers --cov-fail-under=85
+      - name: OpenAPI contract freshness
+        working-directory: backend
+        run: |
+          python scripts/export_openapi.py
+          git diff --exit-code -- ../docs/openapi.json
       - name: Dependency audit (non-blocking report)
         working-directory: backend
         continue-on-error: true

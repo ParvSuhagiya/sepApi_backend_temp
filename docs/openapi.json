@@ -1,0 +1,1139 @@
+{
+  "components": {
+    "schemas": {
+      "CityCenter": {
+        "description": "Approximate map centre for the searched city (geocoded, cached).",
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "title": "CityCenter",
+        "type": "object"
+      },
+      "ForumItem": {
+        "description": "A relevant discussion found in an online forum.",
+        "properties": {
+          "link": {
+            "title": "Link",
+            "type": "string"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "link",
+          "snippet"
+        ],
+        "title": "ForumItem",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Job": {
+        "description": "A job result returned from a search source.",
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "desc": {
+            "title": "Desc",
+            "type": "string"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "geo_precision": {
+            "anyOf": [
+              {
+                "enum": [
+                  "city",
+                  "approximate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geo Precision"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "risk": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High"
+            ],
+            "title": "Risk",
+            "type": "string"
+          },
+          "salary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "via": {
+            "default": "",
+            "title": "Via",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "company",
+          "location",
+          "desc",
+          "flags",
+          "risk"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
+      "Lead": {
+        "additionalProperties": false,
+        "description": "One candidate customer business. Scores are signals, not guarantees.",
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "adjustments": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Adjustments",
+            "type": "array"
+          },
+          "business_type": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Type"
+          },
+          "likely_has_software": {
+            "default": false,
+            "title": "Likely Has Software",
+            "type": "boolean"
+          },
+          "maps_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maps Url"
+          },
+          "match_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Match Reasons",
+            "type": "array"
+          },
+          "match_score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Match Score",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "pitch_angle": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Angle"
+          },
+          "price_level": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Level"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "research_notes": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Research Notes"
+          },
+          "score_breakdown": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Score Breakdown",
+            "type": "object"
+          },
+          "suggested_first_question": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested First Question"
+          },
+          "user_ratings_total": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Ratings Total"
+          },
+          "why_fit": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why Fit"
+          }
+        },
+        "required": [
+          "name",
+          "match_score",
+          "match_reasons"
+        ],
+        "title": "Lead",
+        "type": "object"
+      },
+      "LeadMeta": {
+        "additionalProperties": false,
+        "description": "Credits, cache, degradation and per-stage timings for a leads request.",
+        "properties": {
+          "cache_hits": {
+            "minimum": 0.0,
+            "title": "Cache Hits",
+            "type": "integer"
+          },
+          "credits_used": {
+            "minimum": 0.0,
+            "title": "Credits Used",
+            "type": "integer"
+          },
+          "degraded": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Degraded",
+            "type": "array"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "partial": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Partial",
+            "type": "array"
+          },
+          "timings_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "default": {},
+            "title": "Timings Ms",
+            "type": "object"
+          }
+        },
+        "required": [
+          "credits_used",
+          "cache_hits"
+        ],
+        "title": "LeadMeta",
+        "type": "object"
+      },
+      "LeadsResponse": {
+        "additionalProperties": false,
+        "description": "Ranked customer leads plus honesty metadata.",
+        "properties": {
+          "disclaimer": {
+            "default": "Lead scores are signals from public data, not guarantees. Verify details before contacting.",
+            "minLength": 1,
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "leads": {
+            "items": {
+              "$ref": "#/components/schemas/Lead"
+            },
+            "maxItems": 20,
+            "title": "Leads",
+            "type": "array"
+          },
+          "market_notes": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Market Notes",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/LeadMeta"
+          },
+          "offer_summary": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Offer Summary",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer_summary",
+          "leads",
+          "market_notes",
+          "meta"
+        ],
+        "title": "LeadsResponse",
+        "type": "object"
+      },
+      "Meta": {
+        "description": "Request metadata returned alongside search results.",
+        "properties": {
+          "city_center": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CityCenter"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "degraded": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Degraded",
+            "type": "array"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "partial": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Partial",
+            "type": "array"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "duration_ms",
+          "degraded"
+        ],
+        "title": "Meta",
+        "type": "object"
+      },
+      "OfferInput": {
+        "additionalProperties": false,
+        "description": "Owner-supplied product description plus targeting parameters.",
+        "properties": {
+          "city": {
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "City",
+            "type": "string"
+          },
+          "max_leads": {
+            "default": 10,
+            "maximum": 20.0,
+            "minimum": 5.0,
+            "title": "Max Leads",
+            "type": "integer"
+          },
+          "monthly_price": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Price"
+          },
+          "offer": {
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Offer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer",
+          "city"
+        ],
+        "title": "OfferInput",
+        "type": "object"
+      },
+      "Opportunity": {
+        "description": "Validated final earning opportunity with scores and supporting evidence.",
+        "properties": {
+          "adjustments": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Adjustments",
+            "type": "array"
+          },
+          "competition": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Competition",
+            "type": "integer"
+          },
+          "cost_ease": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cost Ease",
+            "type": "integer"
+          },
+          "demand": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Demand",
+            "type": "integer"
+          },
+          "earn_score": {
+            "title": "Earn Score",
+            "type": "integer"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "fit": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Fit",
+            "type": "integer"
+          },
+          "income_estimate": {
+            "title": "Income Estimate",
+            "type": "string"
+          },
+          "plan_7_days": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "minItems": 7,
+            "title": "Plan 7 Days",
+            "type": "array"
+          },
+          "score_breakdown": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Score Breakdown",
+            "type": "object"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "trust": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Trust",
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "job",
+              "freelance",
+              "local business",
+              "online selling",
+              "content"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "type",
+          "why",
+          "income_estimate",
+          "demand",
+          "competition",
+          "fit",
+          "cost_ease",
+          "trust",
+          "evidence",
+          "plan_7_days",
+          "earn_score",
+          "score_breakdown"
+        ],
+        "title": "Opportunity",
+        "type": "object"
+      },
+      "OutreachRequest": {
+        "description": "Inputs for creating a message tailored to an opportunity target.",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/Profile"
+          },
+          "target": {
+            "additionalProperties": true,
+            "title": "Target",
+            "type": "object"
+          }
+        },
+        "required": [
+          "profile",
+          "target"
+        ],
+        "title": "OutreachRequest",
+        "type": "object"
+      },
+      "OutreachResponse": {
+        "description": "Generated outreach message plus a fixed safety note.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "safety_note": {
+            "title": "Safety Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "safety_note"
+        ],
+        "title": "OutreachResponse",
+        "type": "object"
+      },
+      "Place": {
+        "description": "A local business or service provider search result.",
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "reviews": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviews"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Place",
+        "type": "object"
+      },
+      "Profile": {
+        "description": "User profile parameters used to tailor earning recommendations.",
+        "properties": {
+          "budget": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Budget",
+            "type": "integer"
+          },
+          "city": {
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "City",
+            "type": "string"
+          },
+          "hours": {
+            "default": 10,
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Hours",
+            "type": "integer"
+          },
+          "skills": {
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Skills",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skills",
+          "city"
+        ],
+        "title": "Profile",
+        "type": "object"
+      },
+      "SearchResponse": {
+        "description": "Complete response containing recommendations and supporting source data.",
+        "properties": {
+          "forum": {
+            "items": {
+              "$ref": "#/components/schemas/ForumItem"
+            },
+            "title": "Forum",
+            "type": "array"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "local": {
+            "items": {
+              "$ref": "#/components/schemas/Place"
+            },
+            "title": "Local",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "opportunities": {
+            "items": {
+              "$ref": "#/components/schemas/Opportunity"
+            },
+            "title": "Opportunities",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/Stats"
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Trend",
+            "type": "array"
+          },
+          "trend_growth": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Trend Growth",
+            "type": "object"
+          },
+          "trend_keyword": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Keyword"
+          }
+        },
+        "required": [
+          "opportunities",
+          "jobs",
+          "local",
+          "trend",
+          "trend_keyword",
+          "trend_growth",
+          "forum",
+          "stats",
+          "meta"
+        ],
+        "title": "SearchResponse",
+        "type": "object"
+      },
+      "Stats": {
+        "description": "Usage and cache statistics for a response.",
+        "properties": {
+          "cache_hits": {
+            "title": "Cache Hits",
+            "type": "integer"
+          },
+          "credits_used": {
+            "title": "Credits Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "credits_used",
+          "cache_hits"
+        ],
+        "title": "Stats",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "description": "A dated trend measurement.",
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "TrendPoint",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "EarnRadar API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "description": "Report minimal liveness publicly, details only when authorized.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Api Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/leads": {
+      "post": {
+        "description": "Run the customer-mode pipeline for a product offer.\n\nBody validation runs before this handler, so invalid (422) requests never\nconsume rate-limit quota. The feature flag is checked before the\naccess-code gate so a disabled mode stays silent.",
+        "operationId": "api_leads_api_leads_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Leads"
+      }
+    },
+    "/api/outreach": {
+      "post": {
+        "description": "Draft a short outreach message for a profile/target pair.",
+        "operationId": "api_outreach_api_outreach_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutreachResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Outreach"
+      }
+    },
+    "/api/search": {
+      "post": {
+        "description": "Run the full search pipeline for a user profile.\n\nBody validation runs before this handler, so invalid (422) requests never\nconsume rate-limit quota. The access-code check stays first.",
+        "operationId": "api_search_api_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Search"
+      }
+    }
+  }
+}
