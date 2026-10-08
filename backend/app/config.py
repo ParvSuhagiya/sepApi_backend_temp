@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     leads_request_deadline_seconds: int = 45
     rate_limit_leads_per_hour: int = 5
     leads_cache_hours: int = 6
+    geocode_enabled: bool = False
+    geocode_provider: str = "nominatim"
+    geocode_base_url: str = "https://nominatim.openstreetmap.org"
+    geocode_user_agent: str = ""
+    geocode_max_per_request: int = 8
 
     @property
     def docs_enabled(self) -> bool:

@@ -64,3 +64,13 @@ services:
         sync: false
       - key: LEADS_CACHE_HOURS
         sync: false
+      - key: GEOCODE_ENABLED
+        sync: false
+      - key: GEOCODE_PROVIDER
+        sync: false
+      - key: GEOCODE_BASE_URL
+        sync: false
+      - key: GEOCODE_USER_AGENT
+        sync: false
+      - key: GEOCODE_MAX_PER_REQUEST
+        sync: false

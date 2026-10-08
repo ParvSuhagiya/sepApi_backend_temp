@@ -75,6 +75,11 @@ Copy-Item .env.example .env
 | `LEADS_REQUEST_DEADLINE_SECONDS` | `45` | no | Wall-clock deadline per customer-mode request |
 | `RATE_LIMIT_LEADS_PER_HOUR` | `5` | no | Per-IP leads limit (separate bucket from search) |
 | `LEADS_CACHE_HOURS` | `6` | no | Customer-mode response cache TTL (`0` = off; hits report `credits_used == 0`) |
+| `GEOCODE_ENABLED` | `false` | no | Geocode job locations + map centre via a Nominatim-compatible provider (off by default; requests never fail when off or failing) |
+| `GEOCODE_PROVIDER` | `nominatim` | no | `nominatim` or `photon` response shape; anything else disables geocoding safely |
+| `GEOCODE_BASE_URL` | `https://nominatim.openstreetmap.org` | no | Override for a self-hosted Nominatim/Photon or paid provider |
+| `GEOCODE_USER_AGENT` | - | yes, when enabled | Identifying User-Agent (Nominatim usage policy); geocoding stays off when empty |
+| `GEOCODE_MAX_PER_REQUEST` | `8` | no | Max unique locations geocoded per request (city/region strings only) |
 
 ## Run
 
@@ -108,8 +113,7 @@ python scripts/ai_smoke.py
 
 Without the key the script prints a skip message and exits 0.
 
-## Scoring and guardrails
-`EarnScore = 30% Demand + 20% Fit + 20% Trust + 15% Low competition + 15% Easy
+## Scoring and guardrails`EarnScore = 30% Demand + 20% Fit + 20% Trust + 15% Low competition + 15% Easy
 to start`, computed deterministically from the AI-estimated sub-scores.
 Demand, Competition and Trust themselves are AI-estimated from the collected
 evidence (job counts, trend growth, forum signals) — the README admits this
@@ -124,6 +128,25 @@ honestly; the formula and guardrails are the deterministic part.
   jobs show scam signals").
 - Job-type items additionally lose Trust in proportion to the share of
   High-risk matching jobs (`TRUST_HIGH_RISK_SHARE_PENALTY = 15` at full share).
+
+## Geocoding (job pins and map centre, optional)
+
+Job locations and the map centre are geocoded only when `GEOCODE_ENABLED=true`
+(default `false`). Only city/region-level strings are sent (street detail,
+company names and remote locations are stripped or skipped); results cache
+for 30 days; at most one upstream request per second and
+`GEOCODE_MAX_PER_REQUEST` (default 8) unique strings per request. Geocoding
+never spends SerpAPI credits and a failure (or disabled flag) only leaves
+`lat`/`lng`/`geo_precision` as `None` — the request never fails because of it.
+
+Nominatim's public instance (`https://nominatim.openstreetmap.org`, the
+default `GEOCODE_BASE_URL`) has a strict usage policy (max 1 request/second,
+an identifying `User-Agent`, light use only). It is fine for development
+and demos. For production, point `GEOCODE_BASE_URL` at a self-hosted
+Nominatim (`GEOCODE_PROVIDER=nominatim`), a self-hosted Photon
+(`GEOCODE_PROVIDER=photon`, GeoJSON responses), or a paid provider that
+speaks one of those two response shapes, and set `GEOCODE_USER_AGENT` to
+identify your app (e.g. `EarnRadar/1.0 (contact@example.com)`).
 
 ## API examples
 Health:

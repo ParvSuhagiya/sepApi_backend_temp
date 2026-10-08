@@ -11,6 +11,7 @@ from app.errors import AllSourcesFailed, RankingFailed, UpstreamFailure
 from app.observability import redact
 from app.schemas import Opportunity, Profile
 from app.services.cleaning import clean_forum, clean_jobs, clean_places, choose_trend
+from app.services.geocode import attach_job_coords
 from app.services.outreach import draft_outreach
 from app.services.planner import make_plan
 from app.services.ranker import build_evidence, rank
@@ -116,6 +117,16 @@ async def _run_search_inner(profile: Profile, request_id: str | None = None) -> 
 
     jobs = clean_jobs(job_responses)
     places = clean_places(maps_responses)
+    try:
+        jobs, geo_stats = await attach_job_coords(jobs)
+        logger.debug(
+            "geocode jobs upstream=%d hits=%d",
+            geo_stats.get("upstream_calls", 0),
+            geo_stats.get("cache_hits", 0),
+        )
+    except Exception:
+        # Geocoding must never fail the request; pins just stay empty.
+        logger.warning("geocode jobs failed; continuing without coordinates")
     trend, trend_keyword, trend_growth = choose_trend(plan.trend_keywords, trend_responses)
     forum = clean_forum(forum_responses)
 

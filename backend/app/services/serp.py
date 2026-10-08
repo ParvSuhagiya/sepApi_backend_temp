@@ -51,6 +51,8 @@ __all__ = [
     "rank_cache_set",
     "leads_cache_get",
     "leads_cache_set",
+    "geocache_get",
+    "geocache_set",
 ]
 
 SERP_BASE_URL = "https://serpapi.com/search.json"
@@ -636,5 +638,46 @@ def leads_cache_set(key: str, payload: dict, ttl_seconds: float) -> None:
             "INSERT OR REPLACE INTO rank_cache(k, v, created_at, ttl)"
             " VALUES(?, ?, ?, ?)",
             (key, blob, time.time(), ttl),
+        )
+        conn.commit()
+
+
+_GEOCODE_CACHE_TTL_SECONDS = 30 * 24 * 3600.0
+
+
+def geocache_get(key: str) -> str | None:
+    """Return a fresh cached geocode JSON value for a key, else None."""
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        cur = conn.execute(
+            "SELECT v, created_at, ttl FROM cache WHERE k = ?", (key,)
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    try:
+        if time.time() - float(row[1]) >= float(row[2]):
+            return None
+        return str(row[0])
+    except (TypeError, ValueError):
+        return None
+
+
+def geocache_set(key: str, value: str) -> None:
+    """Store a geocode JSON value for 30 days in the shared cache table."""
+    try:
+        blob = str(value)
+    except Exception:
+        return
+    if not blob:
+        return
+    _db_path_or_init()
+    with _LOCK:
+        conn = _get_conn_locked()
+        conn.execute(
+            "INSERT OR REPLACE INTO cache(k, engine, v, created_at, ttl)"
+            " VALUES(?, ?, ?, ?, ?)",
+            (key, "geocode", blob, time.time(), _GEOCODE_CACHE_TTL_SECONDS),
         )
         conn.commit()
