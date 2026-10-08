@@ -38,6 +38,18 @@ services:
         sync: false
       - key: LOG_LEVEL
         sync: false
+      - key: TTL_JOBS_HOURS
+        sync: false
+      - key: TTL_MAPS_HOURS
+        sync: false
+      - key: TTL_TRENDS_HOURS
+        sync: false
+      - key: TTL_FORUMS_HOURS
+        sync: false
+      - key: LLM_TIMEOUT_SECONDS
+        sync: false
+      - key: SERP_TIMEOUT_SECONDS
+        sync: false
       - key: ENABLE_CUSTOMER_MODE
         sync: false
       - key: LEAD_RESEARCH_TOP_N

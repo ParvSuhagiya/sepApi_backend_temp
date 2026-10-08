@@ -23,6 +23,10 @@ profiles at least one High-risk job was seen (Scam Shield demo), at least one
 place has a phone (WhatsApp demo), trend data is present, and that re-running
 the demo profile costs 0 credits (fully cached). It exits non-zero when the
 demo path is not ready.
+
+Leads readiness check: the restaurant example (Ahmedabad) must return at
+least 5 leads with at least 3 carrying a phone number, and a repeat run must
+cost 0 credits (response cache). It exits non-zero when not ready.
 """
 
 from __future__ import annotations
@@ -38,9 +42,26 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_PROFILES = [
     {"skills": "Python basics, Excel", "city": "Ahmedabad", "hours": 10, "budget": 0},
     {"skills": "tailoring, stitching", "city": "Pune", "hours": 12, "budget": 0},
-    {"skills": "cooking, tiffin service", "city": "Mumbai", "hours": 20, "budget": 2000},
+    {
+        "skills": "cooking, tiffin service",
+        "city": "Mumbai",
+        "hours": 20,
+        "budget": 2000,
+    },
     {"skills": "delivery, driving", "city": "Ahmedabad", "hours": 15, "budget": 0},
 ]
+
+LEADS_EXAMPLE = {
+    "offer": (
+        "i am a devops engineer and i have made a restaurant management system: "
+        "manager assigns customers, waiter takes order, cook prepares food, "
+        "waiter serves, manager handles bills. 800 rupees/month. "
+        "target mid level restaurants that have waiter, manager, cook"
+    ),
+    "city": "Ahmedabad",
+    "monthly_price": 800,
+    "max_leads": 10,
+}
 
 
 def load_profiles(path: str | None) -> list[dict]:
@@ -116,6 +137,52 @@ def _demo_readiness(summaries: list[dict]) -> tuple[bool, list[str]]:
     return (not problems, problems)
 
 
+async def prewarm_leads_one(offer_data: dict) -> dict:
+    from app.modes.customers.pipeline import run_leads
+    from app.modes.customers.schemas import OfferInput
+
+    start = time.perf_counter()
+    try:
+        result = await run_leads(OfferInput.model_validate(offer_data))
+        wall_ms = int((time.perf_counter() - start) * 1000)
+        leads = result.get("leads", [])
+        return {
+            "ok": True,
+            "offer": offer_data,
+            "credits_used": result["meta"]["credits_used"],
+            "cache_hits": result["meta"]["cache_hits"],
+            "leads": len(leads),
+            "with_phone": sum(1 for lead in leads if lead.get("phone")),
+            "notes": result["meta"]["notes"],
+            "wall_ms": wall_ms,
+            "result": result,
+        }
+    except Exception as exc:
+        wall_ms = int((time.perf_counter() - start) * 1000)
+        return {
+            "ok": False,
+            "offer": offer_data,
+            "error": f"{type(exc).__name__}",
+            "wall_ms": wall_ms,
+        }
+
+
+def _leads_readiness(summary: dict, repeat_credits: int) -> tuple[bool, list[str]]:
+    """Check the restaurant example; return (ready, problems)."""
+    problems: list[str] = []
+    if not summary.get("ok"):
+        return False, [f"leads example failed: {summary.get('error', 'unknown')}"]
+    if summary.get("leads", 0) < 5:
+        problems.append(f"only {summary.get('leads', 0)} leads (need >= 5)")
+    if summary.get("with_phone", 0) < 3:
+        problems.append(
+            f"only {summary.get('with_phone', 0)} leads with phone (need >= 3)"
+        )
+    if repeat_credits != 0:
+        problems.append(f"repeat run cost {repeat_credits} credits (expected 0)")
+    return (not problems, problems)
+
+
 async def _main_async(profiles: list[dict]) -> int:
     from app.services.serp import close_serp, init_cache, init_serp
 
@@ -164,10 +231,40 @@ async def _main_async(profiles: list[dict]) -> int:
         repeat_credits = repeat.get("credits_used", -1)
         print(f"demo readiness: repeat run credits_used={repeat_credits}")
         if repeat_credits != 0:
-            problems.append(
-                f"repeat run cost {repeat_credits} credits (expected 0)"
-            )
+            problems.append(f"repeat run cost {repeat_credits} credits (expected 0)")
             ready = False
+
+        # Leads example: warm the customer-mode path and check readiness.
+        leads_summary = await prewarm_leads_one(dict(LEADS_EXAMPLE))
+        if leads_summary["ok"]:
+            print(
+                "leads offer={offer!r} city={city!r} "
+                "credits_used={credits} cache_hits={hits} "
+                "leads={leads} with_phone={phones} wall_ms={ms}".format(
+                    offer="restaurant example",
+                    city=LEADS_EXAMPLE["city"],
+                    credits=leads_summary["credits_used"],
+                    hits=leads_summary["cache_hits"],
+                    leads=leads_summary["leads"],
+                    phones=leads_summary["with_phone"],
+                    ms=leads_summary["wall_ms"],
+                )
+            )
+        else:
+            print(
+                "leads offer='restaurant example' ERROR={error} wall_ms={ms}".format(
+                    error=leads_summary["error"], ms=leads_summary["wall_ms"]
+                )
+            )
+        repeat_leads = await prewarm_leads_one(dict(LEADS_EXAMPLE))
+        repeat_leads_credits = repeat_leads.get("credits_used", -1)
+        print(f"leads readiness: repeat run credits_used={repeat_leads_credits}")
+        leads_ready, leads_problems = _leads_readiness(
+            leads_summary, repeat_leads_credits
+        )
+        for problem in leads_problems:
+            print(f"leads readiness: missing {problem}")
+        ready = ready and leads_ready
 
         if ready:
             print("demo readiness: READY")

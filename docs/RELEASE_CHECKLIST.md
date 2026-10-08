@@ -13,12 +13,16 @@ added during hardening. All boxes must be ticked before a demo or launch.
 - [ ] One failing SerpAPI engine still renders the page (degraded/partial notice)
 - [ ] Disclaimers visible (estimates, scam-signal, information-not-guarantees)
 - [ ] Layout works at 360 px with no horizontal scroll
+- [ ] Customers tab: restaurant example returns leads with scores, snippets and market notes
+- [ ] Customers tab: empty state, degraded/partial notice and disclaimer visible
+- [ ] Customers tab: outreach draft editable with safety note and opt-out line, nothing auto-sent
 
 ## Security and configuration (Render)
 
 - [ ] `ALLOWED_ORIGINS` is the exact production frontend URL (no trailing slash)
 - [ ] `TRUSTED_PROXY_HOPS` verified with one real request (access log shows true client IP)
-- [ ] Daily budgets set (`MAX_SERP_CALLS_PER_DAY`, `MAX_LLM_CALLS_PER_DAY`)
+- [ ] Daily budgets set (`MAX_SERP_CALLS_PER_DAY`, `MAX_LLM_CALLS_PER_DAY`, `MAX_LEAD_SERP_CALLS_PER_DAY`)
+- [ ] `ENABLE_CUSTOMER_MODE` on in staging first, verified, then on in production
 - [ ] Docs disabled in production (`APP_ENV=production`, `ENABLE_DOCS` unset/false)
 - [ ] API keys only in the Render dashboard (never in git or the frontend bundle)
 - [ ] `ACCESS_CODE` set if the demo needs a soft gate; team knows it is not a secret
@@ -28,16 +32,18 @@ added during hardening. All boxes must be ticked before a demo or launch.
 
 - [ ] `VITE_API_URL` points at the production backend; optional `VITE_ACCESS_CODE` matches
 - [ ] `python -m scripts.prewarm` run after deploy; demo readiness check passes
+- [ ] Leads prewarm check passes (>= 5 leads, >= 3 with phone, repeat run 0 credits)
 - [ ] 360 px check done on a real phone viewport; focus rings visible, keyboard operable
 - [ ] `grep -rn "sk-\|SERPAPI_KEY\|ANTHROPIC_API_KEY" frontend/src frontend/dist` prints nothing
 
 ## Verification commands
 
 ```bash
-cd backend && pytest -q
+cd backend && pytest -q --cov=app
 cd frontend && npm test -- --run && npm run build
+python scripts/eval_leads.py && python scripts/load_leads.py
 git ls-files | grep -E "\.env$|cache\.db|node_modules|__pycache__"
-grep -rn "sk-\|SERPAPI_KEY\|ANTHROPIC_API_KEY" frontend/src frontend/dist || echo "no keys in frontend"
+grep -rn "sk-\|AIza\|gsk_\|SERPAPI\|API_KEY" frontend/src frontend/dist || echo "no keys in frontend"
 ```
 
 ## Rollback / backup

@@ -18,6 +18,12 @@ into `docs/`. To keep the repo self-describing, this folder instead contains:
   brief; entries that cannot be verified without the PDD are marked Unknown.
 - `RELEASE_CHECKLIST.md` — release checklist (PDD §19.2 items as cited in the
   brief, plus the new operational items).
+- `API.md` — `POST /api/leads` reference with a validated example.
+- `ADR-0001-customer-mode.md` — why the separate mode package, signals not
+  guarantees, no lead-website scraping.
+- `RUNBOOK.md` — budgets, outages, cache reset, rolling back customer mode.
+- `DATA-HANDLING.md` — what is collected, retention, what is never stored.
+- `find-customers-scoring.md` — lead scoring signals and weights.
 
 If the originals surface later, copy them here unchanged and reconcile any
 conflicts against the code before editing.
