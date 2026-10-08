@@ -22,6 +22,7 @@ Lead score (step 2.4) is added below in the same module.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 
 from app.data.chains import KNOWN_CHAINS
 from app.modes.customers.constants import MID_LEVEL_BANDS, bands_for
@@ -44,6 +45,17 @@ __all__ = [
     "is_chain",
     "is_chain_lead",
     "mid_level_signal",
+    "W_MID_LEVEL",
+    "W_PAIN",
+    "W_REACHABILITY",
+    "W_NO_SOFTWARE",
+    "REACH_PHONE_POINTS",
+    "REACH_WEBSITE_POINTS",
+    "REACH_MAX_POINTS",
+    "PAIN_HITS_FULL",
+    "UNREACHABLE_SCORE_CAP",
+    "LeadScore",
+    "lead_score",
 ]
 
 #: Component weights for mid_level_signal; must sum to 1.0.
@@ -145,3 +157,93 @@ def mid_level_signal(place: LeadPlace, target_type: str = "restaurant") -> int:
     if place.phone:
         blended += MID_PHONE_BONUS
     return max(0, min(100, int(round(blended))))
+
+
+#: Lead-score weights; must sum to 1.0.
+W_MID_LEVEL = 0.40
+W_PAIN = 0.30
+W_REACHABILITY = 0.15
+W_NO_SOFTWARE = 0.15
+
+#: Reachability points (normalised by REACH_MAX_POINTS to 0..100).
+REACH_PHONE_POINTS = 10
+REACH_WEBSITE_POINTS = 5
+REACH_MAX_POINTS = REACH_PHONE_POINTS + REACH_WEBSITE_POINTS
+
+#: Pain hits at or above this count earn the full pain component.
+PAIN_HITS_FULL = 3
+
+#: Cap applied when a lead has neither phone nor website.
+UNREACHABLE_SCORE_CAP = 60
+
+
+@dataclass
+class LeadScore:
+    """Final 0..100 lead signal with per-component breakdown and guardrails."""
+
+    score: int = 0
+    breakdown: dict[str, float] = field(default_factory=dict)
+    adjustments: list[str] = field(default_factory=list)
+
+
+def _clamp_0_100(value: object) -> int:
+    try:
+        number = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0
+    return max(0, min(100, number))
+
+
+def lead_score(
+    *,
+    mid_level: int,
+    pain_hits: int,
+    has_phone: bool,
+    has_website: bool,
+    likely_has_software: bool,
+    research: str = "ok",
+) -> LeadScore:
+    """Blend mid-level fit, pain, reachability and no-software signals.
+
+    Guardrails only cap downwards and every intervention is listed in
+    ``adjustments``. Never raises; unusable inputs score 0.
+    """
+    try:
+        hits = max(0, int(pain_hits))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        hits = 0
+    mid = _clamp_0_100(mid_level)
+
+    adjustments: list[str] = []
+    if research == "partial":
+        pain_component = 0.0
+        adjustments.append("Reviews unavailable, score uses listing data only")
+    else:
+        pain_component = min(hits, PAIN_HITS_FULL) / PAIN_HITS_FULL * 100.0
+
+    reach_points = (REACH_PHONE_POINTS if has_phone else 0) + (
+        REACH_WEBSITE_POINTS if has_website else 0
+    )
+    reach_component = reach_points / REACH_MAX_POINTS * 100.0
+    no_software_component = 0.0 if likely_has_software else 100.0
+
+    total = (
+        W_MID_LEVEL * mid
+        + W_PAIN * pain_component
+        + W_REACHABILITY * reach_component
+        + W_NO_SOFTWARE * no_software_component
+    )
+    if not has_phone and not has_website:
+        total = min(total, UNREACHABLE_SCORE_CAP)
+        adjustments.append("Hard to reach: no public phone or website")
+
+    return LeadScore(
+        score=max(0, min(100, int(round(total)))),
+        breakdown={
+            "mid_level": round(float(mid), 1),
+            "pain": round(pain_component, 1),
+            "reachability": round(reach_component, 1),
+            "no_software": round(no_software_component, 1),
+        },
+        adjustments=adjustments,
+    )
