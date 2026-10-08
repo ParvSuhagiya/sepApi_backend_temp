@@ -180,3 +180,79 @@ async def test_rank_cache_skips_second_ranking(staged, tmp_cache_path, monkeypat
     assert second["meta"]["request_id"] == "b"
     await serp_module.close_serp()
     get_settings.cache_clear()
+
+
+# --- Phase 6: failure isolation, alignment, T-7 -------------------------------
+
+
+async def test_all_engines_throw_raises_all_sources_failed(staged):
+    from app.errors import AllSourcesFailed, SerpError
+
+    staged.setattr(pipeline_module, "serp", _script([SerpError("down")] * 7))
+    staged.setattr(pipeline_module, "rank", _fake_rank([_opp()]))
+    with pytest.raises(AllSourcesFailed):
+        await pipeline_module.run_search(PROFILE, request_id="all-down")
+
+
+async def test_single_engine_throw_keeps_200_with_degraded(staged):
+    from app.errors import SerpError
+
+    staged.setattr(
+        pipeline_module,
+        "serp",
+        _script([JOBS_OK, JOBS_OK, MAPS_OK, MAPS_OK, TRENDS_OK, TRENDS_OK, SerpError("forum down")]),
+    )
+    staged.setattr(pipeline_module, "rank", _fake_rank([_opp()]))
+    result = await pipeline_module.run_search(PROFILE, request_id="t8")
+    assert result["meta"]["degraded"] == ["forums"]
+    assert result["meta"]["partial"] == []
+    assert len(result["opportunities"]) == 1
+
+
+async def test_plan_queries_align_positionally_with_spec(staged):
+    seen: list = []
+
+    async def recording_serp(engine: str, **params):
+        seen.append((engine, params))
+        return {"jobs_results": [], "local_results": []}
+
+    staged.setattr(pipeline_module, "serp", recording_serp)
+    staged.setattr(pipeline_module, "rank", _fake_rank([_opp()]))
+    await pipeline_module.run_search(PROFILE, request_id="align")
+    assert seen[0][1]["q"] == "tailoring jobs"
+    assert seen[1][1]["q"] == "stitching work"
+    assert seen[2][1]["q"] == "tailoring in Pune"
+    assert seen[4][1]["q"] == "tailoring"
+
+
+async def test_t7_cached_repeat_costs_zero_credits(tmp_cache_path, monkeypatch):
+    """T-7: identical repeat search shows credits_used == 0 (real cache)."""
+    import httpx
+    import respx
+
+    import app.services.serp as serp_module
+    from app.config import get_settings
+
+    await serp_module.close_serp()
+    serp_module.init_cache(tmp_cache_path)
+    serp_module.new_request_stats()
+
+    async def fake_plan(profile):
+        return _plan(), False
+
+    monkeypatch.setattr(pipeline_module, "make_plan", fake_plan)
+    monkeypatch.setattr(pipeline_module, "rank", _fake_rank([_opp()]))
+
+    payload = {**JOBS_OK, **MAPS_OK, **TRENDS_OK, **FORUMS_OK}
+    with respx.mock(assert_all_called=False) as router:
+        route = router.get("https://serpapi.com/search.json").mock(
+            return_value=httpx.Response(200, json=payload)
+        )
+        first = await pipeline_module.run_search(PROFILE, request_id="t7a")
+        assert first["stats"]["credits_used"] == 7
+        assert route.call_count == 7
+        second = await pipeline_module.run_search(PROFILE, request_id="t7b")
+        assert second["stats"]["credits_used"] == 0
+        assert second["stats"]["cache_hits"] == 7
+        assert route.call_count == 7
+    await serp_module.close_serp()
