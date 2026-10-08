@@ -57,7 +57,12 @@ Copy-Item .env.example .env
 | `TTL_FORUMS_HOURS` | `72` | no | Cache TTL for Forums |
 | `RATE_LIMIT_SEARCH_PER_HOUR` | `10` | no | Per-IP search limit |
 | `RATE_LIMIT_OUTREACH_PER_HOUR` | `30` | no | Per-IP outreach limit |
-| `ACCESS_CODE` | `` (empty = open) | no | When set, clients must send `X-Access-Code` |
+| `ACCESS_CODE` | `` (empty = open) | no | When set, clients must send `X-Access-Code`. Soft gate, not a secret: it ships in the frontend bundle. Failed guesses are throttled (20/hour per IP). |
+| `TRUSTED_PROXY_HOPS` | `1` | no | How many right-most `X-Forwarded-For` entries to trust. `0` ignores the header. Verify against Render with one real request. |
+| `MAX_SERP_CALLS_PER_DAY` | `300` | no | Global daily SerpAPI budget (`0` = unlimited). Cache hits stay free; live calls raise when exhausted. |
+| `MAX_LLM_CALLS_PER_DAY` | `500` | no | Global daily Claude budget (`0` = unlimited). Exhaustion returns `429 budget_exhausted`. |
+| `APP_ENV` | `development` | no | Set `production` on Render. Enables docs lockdown and detail-health lockdown. |
+| `ENABLE_DOCS` | auto (`true` unless production) | no | Set `true`/`false` to override the interactive docs (`/docs`, `/openapi.json`). Disable in production. |
 | `LLM_TIMEOUT_SECONDS` | `60` | no | Per-call Claude timeout |
 | `SERP_TIMEOUT_SECONDS` | `40` | no | Per-call SerpAPI timeout |
 | `LOG_LEVEL` | `INFO` | no | Root log level |
@@ -155,7 +160,13 @@ errors. Run the same command twice: the second run must show
 - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Set env vars: `SERPAPI_KEY`, `ANTHROPIC_API_KEY`, plus
   `ALLOWED_ORIGINS` set to the exact frontend URL with no trailing slash
-  (for example `https://earnrader.vercel.app`).
+  (for example `https://earnrader.vercel.app`; a trailing slash is now
+  normalised away, but exact is best).
+- Set `APP_ENV=production`, `ENABLE_DOCS=false`, daily budgets
+  (`MAX_SERP_CALLS_PER_DAY`, `MAX_LLM_CALLS_PER_DAY`).
+- Send one real request and confirm the client IP in the access log matches
+  the true caller before trusting `TRUSTED_PROXY_HOPS=1` behind Render's proxy.
+- Remember the access code is a soft gate shipped in the JS bundle, not a secret.
 - Set `PYTHON_VERSION` to `3.11` to pin the runtime.
 - Free-tier notes: cold starts take 30-60 s; the SQLite cache file resets
   on every redeploy, so re-run `python -m scripts.prewarm` after deploying.

@@ -27,8 +27,7 @@ def test_settings_origins_are_cleaned_and_defaults_are_loaded(
     assert settings.log_level == "INFO"
 
 
-def test_missing_required_keys_raise_a_safe_clear_error(
-    monkeypatch: pytest.MonkeyPatch,
+def test_missing_required_keys_raise_a_safe_clear_error(    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("SERPAPI_KEY")
     monkeypatch.delenv("ANTHROPIC_API_KEY")
@@ -42,3 +41,25 @@ def test_missing_required_keys_raise_a_safe_clear_error(
     assert "ANTHROPIC_API_KEY" in message
     assert "test-serpapi-key" not in message
     assert "test-anthropic-key" not in message
+
+
+def test_origins_normalise_trailing_slash_case_and_dupes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "ALLOWED_ORIGINS",
+        "https://X.Vercel.App/, https://x.vercel.app ,HTTPS://y.example",
+    )
+    get_settings.cache_clear()
+
+    assert get_settings().origins == ["https://x.vercel.app", "https://y.example"]
+
+
+def test_new_security_settings_have_expected_defaults() -> None:
+    settings = get_settings()
+
+    assert settings.trusted_proxy_hops == 1
+    assert settings.max_serp_calls_per_day == 300
+    assert settings.max_llm_calls_per_day == 500
+    assert settings.app_env == "development"
+    assert settings.docs_enabled is True

@@ -5,6 +5,7 @@ __all__ = [
     "InvalidInput",
     "Unauthorized",
     "RateLimited",
+    "BudgetExhausted",
     "UpstreamFailure",
     "SerpError",
     "LLMError",
@@ -62,6 +63,16 @@ class RateLimited(AppError):
     ) -> None:
         self.retry_after = retry_after
         super().__init__(message, detail=detail)
+
+
+class BudgetExhausted(RateLimited):
+    """The global daily credit budget is exhausted."""
+
+    code = "budget_exhausted"
+    status = 429
+    default_message = (
+        "Our daily AI budget is exhausted. Please try again tomorrow."
+    )
 
 
 class UpstreamFailure(AppError):

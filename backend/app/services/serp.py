@@ -16,10 +16,16 @@ from typing import Any
 import httpx
 
 from app.config import get_settings
+from app.budget import try_consume as _budget_consume
 from app.errors import SerpError
 from app.observability import redact
 
 logger = logging.getLogger(__name__)
+
+_SERPI_BUDGET_EXHAUSTED_MESSAGE = (
+    "Daily search budget exhausted. Cached results are still served; "
+    "please try again tomorrow."
+)
 
 __all__ = [
     "request_stats",
@@ -50,6 +56,12 @@ _LOCK = threading.Lock()
 _DB_PATH: str | None = None
 _client: httpx.AsyncClient | None = None
 _lifetime: dict[str, int] = {"credits_used": 0, "cache_hits": 0}
+
+# Cache-stampede protection: in-flight live fetches keyed by cache key. A
+# second concurrent caller for the same key awaits the first instead of
+# spending another credit. Entries are (event loop, future) pairs so stale
+# entries from a closed loop are never awaited.
+_inflight: dict[str, tuple[asyncio.AbstractEventLoop, asyncio.Future]] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -398,7 +410,48 @@ async def serp(engine: str, **params: Any) -> dict:
                 return payload
         # expired or corrupt -> fall through to live fetch
 
-    payload = await _fetch_from_serpapi(engine, params)
+    # Cache miss: enforce the global daily credit budget. Cache hits above
+    # stay free; live calls raise so the pipeline degrades instead of failing.
+    try:
+        serp_budget = int(get_settings().max_serp_calls_per_day)
+    except (TypeError, ValueError):
+        serp_budget = 0
+    if not _budget_consume("serp", serp_budget):
+        logger.warning("SerpAPI daily budget exhausted; refusing live call")
+        raise SerpError(_SERPI_BUDGET_EXHAUSTED_MESSAGE)
+
+    # Stampede protection: join an identical in-flight fetch if one exists.
+    loop = asyncio.get_running_loop()
+    with _LOCK:
+        existing = _inflight.get(key)
+        if existing is not None and (existing[0] is not loop or existing[1].done()):
+            existing = None
+        if existing is None:
+            future: asyncio.Future = loop.create_future()
+            # Avoid "exception was never retrieved" noise when the owner
+            # fails and nobody is waiting.
+            future.add_done_callback(_silence_unretrieved)
+            _inflight[key] = (loop, future)
+            owner = True
+        else:
+            future = existing[1]
+            owner = False
+    if not owner:
+        return await asyncio.shield(future)
+
+    try:
+        payload = await _fetch_from_serpapi(engine, params)
+    except BaseException as exc:
+        if not future.done():
+            try:
+                future.set_exception(exc)
+            except asyncio.InvalidStateError:
+                pass
+        raise
+    finally:
+        with _LOCK:
+            if _inflight.get(key, (None, None))[1] is future:
+                _inflight.pop(key, None)
 
     # Credit is counted only after a successful SerpAPI JSON response.
     _bump_credit()
@@ -410,9 +463,22 @@ async def serp(engine: str, **params: Any) -> dict:
                 _NO_RESULTS_TTL_SECONDS,
             )
         # other errors are never cached
+        if not future.done():
+            future.set_result(payload)
         return payload
 
     await asyncio.to_thread(
         _write_row, key, engine, json.dumps(payload), time.time(), ttl_seconds
     )
+    if not future.done():
+        future.set_result(payload)
     return payload
+
+
+def _silence_unretrieved(future: asyncio.Future) -> None:
+    """Done-callback that marks a failed shared future as retrieved."""
+    try:
+        if not future.cancelled():
+            future.exception()
+    except Exception:
+        pass

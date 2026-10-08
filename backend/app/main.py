@@ -2,27 +2,33 @@
 
 from __future__ import annotations
 
-import hmac
 import logging
-import threading
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import RequestResponseEndpoint
+from starlette.requests import ClientDisconnect
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response
 
 from app.api.routes.health import router as health_router
+from app.budget import reset_budgets
 from app.config import get_settings
 from app.errors import AppError, RateLimited
 from app.observability import request_id_var, setup_logging
 from app.schemas import OutreachRequest, OutreachResponse, Profile, SearchResponse
+from app.security import (
+    SlidingWindowLimiter,
+    client_ip,
+    require_access_code,
+    reset_auth_limiter,
+)
 from app.services import pipeline as _pipeline
 from app.services.serp import close_serp, init_cache, init_serp
 
@@ -30,55 +36,16 @@ logger = logging.getLogger(__name__)
 
 _BODY_LIMIT_BYTES = 20 * 1024
 
-
-class _SlidingWindowLimiter:
-    """Thread-safe per-key sliding-window rate limiter with cleanup."""
-
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._hits: dict[str, list[float]] = {}
-
-    def check(self, key: str, limit: int, window: float = 3600.0) -> tuple[bool, int]:
-        now = time.time()
-        try:
-            limit_n = int(limit)
-        except (TypeError, ValueError):
-            limit_n = 0
-        if limit_n <= 0:
-            return False, int(window)
-        with self._lock:
-            stamps = [t for t in self._hits.get(key, []) if now - t < window]
-            if len(stamps) >= limit_n:
-                retry_after = int(window - (now - stamps[0])) + 1
-                self._hits[key] = stamps
-                self._cleanup_locked(now, window)
-                return False, max(retry_after, 1)
-            stamps.append(now)
-            self._hits[key] = stamps
-            self._cleanup_locked(now, window)
-            return True, 0
-
-    def _cleanup_locked(self, now: float, window: float) -> None:
-        for key in list(self._hits.keys()):
-            kept = [t for t in self._hits[key] if now - t < window]
-            if kept:
-                self._hits[key] = kept
-            else:
-                del self._hits[key]
-
-    def reset(self) -> None:
-        with self._lock:
-            self._hits.clear()
-
-
-_search_limiter = _SlidingWindowLimiter()
-_outreach_limiter = _SlidingWindowLimiter()
+_search_limiter = SlidingWindowLimiter()
+_outreach_limiter = SlidingWindowLimiter()
 
 
 def reset_rate_limiters() -> None:
     """Clear in-memory rate-limit counters (used on startup and in tests)."""
     _search_limiter.reset()
     _outreach_limiter.reset()
+    reset_auth_limiter()
+    reset_budgets()
 
 
 @asynccontextmanager
@@ -95,7 +62,21 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await close_serp()
 
 
-app = FastAPI(title="EarnRadar API", version="1.0.0", lifespan=lifespan)
+try:
+    _docs_enabled = get_settings().docs_enabled
+except Exception:
+    _docs_enabled = True
+
+# NOTE: docs flags and CORS origins are fixed at import time from the
+# environment. Tests that need the other mode re-import this module.
+app = FastAPI(
+    title="EarnRadar API",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
+)
 app.include_router(health_router)
 
 
@@ -162,44 +143,37 @@ async def _handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=500,
         content=_error_body("internal", "Something went wrong.", rid),
+        # NOTE: Starlette routes `Exception` handlers to the OUTERMOST
+        # ServerErrorMiddleware, so this response never passes through
+        # CORSMiddleware: echo an allowed origin explicitly, plus the
+        # request id, so browsers surface the envelope instead of a CORS error.
+        headers=_safe_error_headers(request, rid),
     )
 
 
-def _client_ip(request: Request) -> str:
+def _safe_error_headers(request: Request, rid: str) -> dict[str, str]:
+    """CORS + request-id headers for error responses born outside CORS."""
+    headers: dict[str, str] = {}
     try:
-        forwarded = request.headers.get("x-forwarded-for", "")
+        origin = request.headers.get("origin", "")
     except Exception:
-        forwarded = ""
-    if forwarded:
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first
-    try:
-        if request.client is not None:
-            return request.client.host
-    except Exception:
-        pass
-    return "unknown"
-
-
-async def _require_access_code(request: Request) -> None:
-    from app.errors import Unauthorized
-
-    settings = get_settings()
-    if not settings.access_code:
-        return
-    try:
-        provided = request.headers.get("X-Access-Code", "")
-    except Exception:
-        provided = ""
-    if not hmac.compare_digest(provided, settings.access_code):
-        raise Unauthorized()
+        origin = ""
+    if origin:
+        try:
+            allowed = get_settings().origins
+        except Exception:
+            allowed = []
+        if origin in allowed:
+            headers["Access-Control-Allow-Origin"] = origin
+    if isinstance(rid, str) and rid and rid != "-":
+        headers["X-Request-ID"] = rid
+    return headers
 
 
 async def _enforce_search_limit(request: Request) -> None:
     settings = get_settings()
     allowed, retry_after = _search_limiter.check(
-        f"search:{_client_ip(request)}", settings.rate_limit_search_per_hour
+        f"search:{client_ip(request)}", settings.rate_limit_search_per_hour
     )
     if not allowed:
         raise RateLimited(retry_after=retry_after)
@@ -208,7 +182,7 @@ async def _enforce_search_limit(request: Request) -> None:
 async def _enforce_outreach_limit(request: Request) -> None:
     settings = get_settings()
     allowed, retry_after = _outreach_limiter.check(
-        f"outreach:{_client_ip(request)}", settings.rate_limit_outreach_per_hour
+        f"outreach:{client_ip(request)}", settings.rate_limit_outreach_per_hour
     )
     if not allowed:
         raise RateLimited(retry_after=retry_after)
@@ -246,20 +220,54 @@ async def enforce_body_limit(
     request: StarletteRequest,
     call_next: RequestResponseEndpoint,
 ) -> Response:
-    """Reject request bodies over 20 KB with a 413 error envelope."""
+    """Reject request bodies over 20 KB with a 413 error envelope.
+
+    The Content-Length header is only a fast path: chunked uploads without
+    it are measured while reading the stream (bounded at limit + 1 byte).
+    Bodies within the limit are cached on the request so downstream handlers
+    transparently receive the full body again.
+    """
+    has_length = False
     length = 0
     try:
         raw = request.headers.get("content-length", "")
-        length = int(raw) if raw else 0
+        if raw != "":
+            length = int(raw)
+            has_length = True
     except (TypeError, ValueError):
+        has_length = False
         length = 0
-    if length > _BODY_LIMIT_BYTES:
+    if has_length and length > _BODY_LIMIT_BYTES:
         rid = getattr(request.state, "request_id", None) or request_id_var.get()
         return JSONResponse(
             status_code=413,
             content=_error_body("invalid_input", "Request body too large.", rid),
             headers={"X-Request-ID": rid} if isinstance(rid, str) else None,
         )
+    if has_length:
+        return await call_next(request)
+    # No (valid) Content-Length, e.g. chunked transfer: measure the stream.
+    try:
+        total = 0
+        chunks: list[bytes] = []
+        async for chunk in request.stream():
+            if not chunk:
+                continue
+            total += len(chunk)
+            if total > _BODY_LIMIT_BYTES:
+                rid = getattr(request.state, "request_id", None) or request_id_var.get()
+                return JSONResponse(
+                    status_code=413,
+                    content=_error_body(
+                        "invalid_input", "Request body too large.", rid
+                    ),
+                    headers={"X-Request-ID": rid} if isinstance(rid, str) else None,
+                )
+            chunks.append(chunk)
+        # Replay for downstream: Starlette's _CachedRequest serves `request._body`.
+        request._body = b"".join(chunks)
+    except ClientDisconnect:
+        pass
     return await call_next(request)
 
 
@@ -298,23 +306,23 @@ app.add_middleware(
 )
 
 
-@app.post(
-    "/api/search",
-    response_model=SearchResponse,
-    dependencies=[Depends(_require_access_code), Depends(_enforce_search_limit)],
-)
+@app.post("/api/search", response_model=SearchResponse)
 async def api_search(profile: Profile, request: Request) -> dict:
-    """Run the full search pipeline for a user profile."""
+    """Run the full search pipeline for a user profile.
+
+    Body validation runs before this handler, so invalid (422) requests never
+    consume rate-limit quota. The access-code check stays first.
+    """
+    await require_access_code(request)
+    await _enforce_search_limit(request)
     rid = _request_id(request)
     return await _pipeline.run_search(profile, request_id=rid)
 
 
-@app.post(
-    "/api/outreach",
-    response_model=OutreachResponse,
-    dependencies=[Depends(_require_access_code), Depends(_enforce_outreach_limit)],
-)
-async def api_outreach(body: OutreachRequest) -> dict:
+@app.post("/api/outreach", response_model=OutreachResponse)
+async def api_outreach(body: OutreachRequest, request: Request) -> dict:
     """Draft a short outreach message for a profile/target pair."""
+    await require_access_code(request)
+    await _enforce_outreach_limit(request)
     message = await _pipeline.draft_message(body.profile, body.target)
     return {"message": message}

@@ -2,13 +2,41 @@
 
 from functools import lru_cache
 import logging
+from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Settings", "get_settings"]
+__all__ = ["Settings", "get_settings", "normalize_origin"]
+
+
+def normalize_origin(value: str) -> str:
+    """Normalise a CORS origin: strip whitespace/trailing slash, lowercase scheme+host.
+
+    Drops duplicates' noise (paths, queries, fragments are not valid in an
+    origin). Returns "" for empty input; returns the stripped value unchanged
+    when it does not look like scheme://host (e.g. "*").
+    """
+    cleaned = value.strip().rstrip("/")
+    if not cleaned:
+        return ""
+    try:
+        parts = urlsplit(cleaned)
+    except ValueError:
+        return cleaned
+    if not parts.scheme or not parts.hostname:
+        return cleaned
+    host = parts.hostname.lower()
+    netloc = host
+    if parts.port is not None:
+        netloc = f"{host}:{parts.port}"
+    elif "@" in (parts.netloc or ""):
+        # Preserve userinfo if present (unusual for CORS, but don't corrupt).
+        userinfo = parts.netloc.rsplit("@", 1)[0]
+        netloc = f"{userinfo}@{host}"
+    return urlunsplit((parts.scheme.lower(), netloc, "", "", ""))
 
 
 class Settings(BaseSettings):
@@ -32,16 +60,41 @@ class Settings(BaseSettings):
     rate_limit_search_per_hour: int = 10
     rate_limit_outreach_per_hour: int = 30
     access_code: str = ""
+    trusted_proxy_hops: int = 1
+    max_serp_calls_per_day: int = 300
+    max_llm_calls_per_day: int = 500
+    app_env: str = "development"
+    enable_docs: bool | None = None
     llm_timeout_seconds: int = 60
     serp_timeout_seconds: int = 40
     log_level: str = "INFO"
 
     @property
+    def docs_enabled(self) -> bool:
+        """True unless running in production (overridable via ENABLE_DOCS)."""
+        if self.enable_docs is not None:
+            return bool(self.enable_docs)
+        return (self.app_env or "").strip().lower() != "production"
+
+    @property
     def origins(self) -> list[str]:
-        """Return configured CORS origins with whitespace and empty entries removed."""
-        origins = list(dict.fromkeys(
-            origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()
-        ))
+        """Return configured CORS origins, normalised and deduplicated."""
+        origins: list[str] = []
+        for raw in self.allowed_origins.split(","):
+            if not raw.strip():
+                continue
+            normalized = normalize_origin(raw)
+            if not normalized:
+                continue
+            if normalized != raw.strip():
+                logger.warning(
+                    "CORS origin normalized: %r -> %r "
+                    "(check ALLOWED_ORIGINS for trailing slashes/case)",
+                    raw.strip(),
+                    normalized,
+                )
+            if normalized not in origins:
+                origins.append(normalized)
         if "*" in origins:
             logger.warning(
                 "SECURITY WARNING: ALLOWED_ORIGINS includes '*'; "

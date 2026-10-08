@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from app.budget import reset_budgets, reset_clock
 from app.config import get_settings
 
 
@@ -16,7 +17,11 @@ def configured_test_environment(
     monkeypatch.setenv("SERPAPI_KEY", "test-serpapi-key")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
     get_settings.cache_clear()
+    reset_budgets()
+    reset_clock()
     yield
+    reset_budgets()
+    reset_clock()
     get_settings.cache_clear()
 
 

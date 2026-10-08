@@ -19,7 +19,9 @@ from anthropic import (
 )
 
 from app.config import get_settings
-from app.errors import LLMError, LLMFormatError
+from app.budget import seconds_until_rollover
+from app.budget import try_consume as _budget_consume
+from app.errors import BudgetExhausted, LLMError, LLMFormatError
 from app.observability import redact
 
 logger = logging.getLogger(__name__)
@@ -176,6 +178,16 @@ async def _call(
     label: str,
 ) -> str:
     settings = get_settings()
+    try:
+        llm_budget = int(settings.max_llm_calls_per_day)
+    except (TypeError, ValueError):
+        llm_budget = 0
+    if not _budget_consume("llm", llm_budget):
+        logger.warning("LLM daily budget exhausted label=%s", label)
+        raise BudgetExhausted(
+            "Our daily AI budget is exhausted. Please try again tomorrow.",
+            retry_after=seconds_until_rollover(),
+        )
     client = get_client()
     logger.debug(
         "llm request label=%s system_len=%d user_len=%d max_tokens=%d",
