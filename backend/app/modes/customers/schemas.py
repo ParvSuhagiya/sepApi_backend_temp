@@ -15,6 +15,7 @@ __all__ = [
     "DISCLAIMER",
     "OfferInput",
     "LeadPlan",
+    "LeadPlace",
     "Lead",
     "LeadMeta",
     "LeadsResponse",
@@ -139,9 +140,43 @@ class LeadPlan(BaseModel):
                 raise ValueError("maps_queries must each include the city")
 
 
+class LeadPlace(BaseModel):
+    """A discovered candidate business, normalised from Maps results.
+
+    Research enrichment (``research``, ``pain_snippets``, ``pain_hits``,
+    ``likely_has_software``) is filled in by ``research.py``; discovery
+    leaves the defaults.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=200)
+    type: str | None = Field(default=None, max_length=120)
+    address: str | None = Field(default=None, max_length=300)
+    rating: float | None = Field(default=None, ge=0, le=5)
+    review_count: int | None = Field(default=None, ge=0)
+    price_level: int | None = Field(default=None, ge=1, le=4)
+    phone: str | None = Field(default=None, max_length=20)
+    website: str | None = Field(default=None, max_length=200)
+    maps_url: str | None = Field(default=None, max_length=500)
+    place_id: str | None = Field(default=None, max_length=200)
+    operating_status: str | None = Field(default=None, max_length=120)
+    research: Literal["pending", "ok", "partial"] = "pending"
+    pain_snippets: list[str] = Field(default_factory=list, max_length=3)
+    pain_hits: int = Field(default=0, ge=0)
+    likely_has_software: bool = False
+
+    @field_validator("pain_snippets", mode="after")
+    @classmethod
+    def _snippets_must_fit_lengths(cls, value: list[str]) -> list[str]:
+        cleaned = [_clean_text(snippet) for snippet in value]
+        if any(not 1 <= len(snippet) <= 140 for snippet in cleaned):
+            raise ValueError("pain_snippets entries must be 1..140 characters")
+        return cleaned
+
+
 class Lead(BaseModel):
     """One candidate customer business. Scores are signals, not guarantees."""
-
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     name: str = Field(min_length=1, max_length=200)
