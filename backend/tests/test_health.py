@@ -10,4 +10,11 @@ def test_health_endpoint() -> None:
         response = client.get("/api/health")
 
     assert response.status_code == 200
-    assert response.json() == {"ok": True, "version": "1.0.0"}
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["version"] == "1.0.0"
+    assert isinstance(payload["cache"]["entries"], int)
+    assert isinstance(payload["lifetime"]["credits_used"], int)
+    assert isinstance(payload["lifetime"]["cache_hits"], int)
+    assert isinstance(payload["ai"]["input_tokens"], int)
+    assert isinstance(payload["ai"]["output_tokens"], int)
