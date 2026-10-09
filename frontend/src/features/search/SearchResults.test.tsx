@@ -1,0 +1,94 @@
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { SearchResponse } from '../../api/schemas';
+import { searchSuccess } from '../../test/fixtures';
+import { SearchResultsView } from './SearchResults';
+
+const result = searchSuccess as unknown as SearchResponse;
+
+function resultWith(meta: Partial<SearchResponse['meta']>): SearchResponse {
+  return { ...result, meta: { ...result.meta, ...meta } };
+}
+
+describe('SearchResultsView', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders sticky nav, efficiency line and all section headings', () => {
+    render(<SearchResultsView result={result} />);
+    const nav = screen.getByRole('navigation', { name: 'On this page' });
+    expect(nav).toHaveClass('sticky');
+    for (const label of ['Opportunities', 'Jobs', 'Map', 'Local', 'Trends', 'Forum']) {
+      expect(screen.getByRole('link', { name: label })).toHaveAttribute(
+        'href',
+        `#${label.toLowerCase()}`,
+      );
+    }
+    expect(screen.getByText(/found\./)).toBeInTheDocument();
+  });
+
+  it('tracks the visible section with scroll-spy', () => {
+    let callback: IntersectionObserverCallback = () => {};
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    class FakeObserver {
+      constructor(cb: IntersectionObserverCallback) {
+        callback = cb;
+      }
+      observe = observe;
+      disconnect = disconnect;
+      unobserve = vi.fn();
+    }
+    vi.stubGlobal('IntersectionObserver', FakeObserver);
+    render(<SearchResultsView result={result} />);
+    expect(observe).toHaveBeenCalledTimes(6);
+    expect(screen.queryByRole('link', { current: true })).not.toBeInTheDocument();
+    const target = document.getElementById('jobs');
+    act(() => {
+      callback(
+        [{ target, isIntersecting: true } as unknown as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      );
+    });
+    expect(screen.getByRole('link', { name: 'Jobs' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('shows degraded, partial and mapped notes', () => {
+    render(
+      <SearchResultsView
+        result={resultWith({
+          degraded: ['trends'],
+          partial: ['jobs'],
+          notes: ['fewer_than_5_opportunities'],
+        })}
+      />,
+    );
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveTextContent('Some sources were unavailable: trends.');
+    expect(banner).toHaveTextContent('Partial data from: jobs.');
+    expect(banner).toHaveTextContent('fewer than 5 strong opportunities');
+  });
+
+  it('passes through unmapped notes verbatim and hides when clean', () => {
+    const { rerender } = render(
+      <SearchResultsView result={resultWith({ notes: ['custom backend note'] })} />,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('custom backend note');
+    rerender(<SearchResultsView result={result} />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('dismisses the notice', async () => {
+    const user = userEvent.setup();
+    render(
+      <SearchResultsView
+        result={resultWith({ degraded: ['trends'], partial: [], notes: [] })}
+      />,
+    );
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /dismiss notice/i }));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});

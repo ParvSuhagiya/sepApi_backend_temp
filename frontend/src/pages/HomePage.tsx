@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
 import { Button } from '../components/ui/Button';
 import { CopyButton } from '../components/ui/CopyButton';
 import type { ApiError } from '../api/errors';
 import { ProfileForm } from '../features/search/ProfileForm';
 import { SearchProgress, SearchResultsSkeleton } from '../features/search/SearchProgress';
+import { SearchResults } from '../features/search/SearchResults';
 import { useSearchSession } from '../features/search/session';
 
 function SearchError({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
@@ -51,30 +51,6 @@ export function HomePage() {
         <SearchError error={session.error} onRetry={session.retry} />
       ) : null}
       {session.status === 'success' && session.result ? <SearchResults /> : null}
-    </section>
-  );
-}
-
-function SearchResults() {
-  const { result } = useSearchSession();
-  const headingRef = useRef<HTMLHeadingElement>(null);
-
-  useEffect(() => {
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    headingRef.current?.scrollIntoView?.({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    headingRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  if (!result) return null;
-  const count = result.opportunities.length;
-  return (
-    <section aria-labelledby="results-heading">
-      <h2 id="results-heading" ref={headingRef} tabIndex={-1} className="text-xl font-bold text-ink">
-        Your income opportunities
-      </h2>
-      <p className="mt-1 text-sm text-muted">{count === 1 ? '1 idea found.' : `${count} ideas found.`}</p>
     </section>
   );
 }
