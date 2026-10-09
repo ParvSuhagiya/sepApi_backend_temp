@@ -2,6 +2,16 @@ import { Link } from 'react-router-dom';
 import { RiskBadge } from '../components/ui/RiskBadge';
 import { ScoreRing } from '../components/ui/ScoreBadge';
 
+/** Warm the route chunk on hover/focus so the app opens instantly. */
+function prefetchIncome() {
+  void import('../pages/HomePage');
+}
+
+/** Warm the route chunk on hover/focus so the app opens instantly. */
+function prefetchCustomers() {
+  void import('../pages/CustomersPage');
+}
+
 const STEPS = [
   {
     title: 'Tell us about yourself',
@@ -97,12 +107,16 @@ export function LandingPage() {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/app/income"
+            onMouseEnter={prefetchIncome}
+            onFocus={prefetchIncome}
             className="brand-gradient inline-flex min-h-[44px] items-center rounded-md px-6 py-2 text-base font-semibold text-white shadow-md hover:brightness-110"
           >
             Find my opportunities
           </Link>
           <Link
             to="/app/customers"
+            onMouseEnter={prefetchCustomers}
+            onFocus={prefetchCustomers}
             className="inline-flex min-h-[44px] items-center rounded-md border border-line bg-raised px-6 py-2 text-base font-semibold text-ink hover:bg-surface"
           >
             Find customers for my product
@@ -206,12 +220,16 @@ export function LandingPage() {
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/app/income"
+            onMouseEnter={prefetchIncome}
+            onFocus={prefetchIncome}
             className="brand-gradient inline-flex min-h-[44px] items-center rounded-md px-6 py-2 text-base font-semibold text-white shadow-md hover:brightness-110"
           >
             Find my opportunities
           </Link>
           <Link
             to="/app/customers"
+            onMouseEnter={prefetchCustomers}
+            onFocus={prefetchCustomers}
             className="inline-flex min-h-[44px] items-center rounded-md border border-line bg-raised px-6 py-2 text-base font-semibold text-ink hover:bg-surface"
           >
             Find customers for my product

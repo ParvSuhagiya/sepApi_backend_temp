@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "gen:api": "openapi-typescript ../docs/openapi.json -o src/api/openapi-types.ts",
+    "size-check": "node scripts/size-check.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
