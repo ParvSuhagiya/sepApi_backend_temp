@@ -49,6 +49,7 @@ export function AppRoutes() {
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/app/income" element={<HomePage />} />
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/how-it-works" element={<HowItWorksPage />} />
               {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}

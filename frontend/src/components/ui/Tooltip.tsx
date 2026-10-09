@@ -7,12 +7,12 @@ export function Tooltip({ content, children }: { content: ReactNode; children: R
     'aria-describedby': tipId,
   } as Record<string, string>);
   return (
-    <span className="group relative inline-flex">
+    <span className="group relative inline-flex max-w-full">
       {trigger}
       <span
         id={tipId}
         role="tooltip"
-        className="invisible absolute bottom-full left-1/2 z-[var(--z-tooltip)] mb-2 w-max max-w-64 -translate-x-1/2 rounded-md border border-line bg-raised px-2.5 py-1.5 text-xs text-ink shadow-md group-hover:visible group-focus-within:visible"
+        className="absolute bottom-full left-1/2 z-[var(--z-tooltip)] mb-2 hidden w-max max-w-64 -translate-x-1/2 rounded-md border border-line bg-raised px-2.5 py-1.5 text-xs text-ink shadow-md group-hover:block group-focus-within:block"
       >
         {content}
       </span>

@@ -4,12 +4,13 @@ import { useTheme } from '../app/theme';
 import { Tabs } from './ui/Tabs';
 
 const MODE_TABS = [
-  { id: '/', label: 'Find income ideas' },
+  { id: '/app/income', label: 'Find income ideas' },
   { id: '/customers', label: 'Find customers' },
 ] as const;
 
 function activeTab(pathname: string): string {
-  return pathname === '/customers' ? '/customers' : '/';
+  if (pathname === '/customers') return '/customers';
+  return '/app/income';
 }
 
 /** Site header: wordmark, mode tabs, theme toggle, explainer link. */
