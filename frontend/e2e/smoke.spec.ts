@@ -1,14 +1,25 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-test('home renders shell, tabs work, no a11y violations', async ({ page }) => {
+test('landing renders hero, CTAs and shell with no a11y violations', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /realistic income ideas for india/i }),
+  ).toBeVisible();
   await expect(page.getByRole('tablist', { name: /choose what to find/i })).toBeVisible();
+  await expect(page.getByLabel('Example EarnRadar result')).toBeVisible();
   await expect(page.getByText(/income figures are estimates/i)).toBeVisible();
   await expect(page.getByText(/provides information, not guarantees/i)).toBeVisible();
 
+  // Primary CTA reaches the income app; secondary reaches customers.
+  await page.getByRole('link', { name: 'Find my opportunities' }).first().click();
+  await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Find customers for my product' }).first().click();
+  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+
   // Mode tabs navigate.
+  await page.goto('/');
   await page.getByRole('tab', { name: /find customers/i }).click();
   await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
 

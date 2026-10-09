@@ -1,31 +1,67 @@
 /** Honest explainer page: what the app does and does not promise. */
 export function HowItWorksPage() {
   return (
-    <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-4">
-      <h1 id="how-it-works-heading" className="text-2xl font-bold text-ink">
-        How EarnRadar works
-      </h1>
-      <div className="flex flex-col gap-3 text-sm text-ink">
-        <p>
-          <strong>Find income ideas</strong> turns your skills, city, weekly hours and budget
-          into ranked opportunities. We search live jobs, local businesses, demand trends and
-          forums, then blend the evidence into an EarnScore: 30% Demand, 20% Fit, 20% Trust,
-          15% Low competition, 15% Easy to start.
+    <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-6">
+      <div>
+        <h1 id="how-it-works-heading" className="text-2xl font-bold text-ink">
+          How EarnRadar works
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Plain words. Short version: live evidence in, honest scores out.
         </p>
-        <p>
-          <strong>Find customers</strong> turns your product description into ranked local
-          businesses that could buy from you, with review-derived pain signals and a draft
-          first message you review yourself.
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-ink">Where the data comes from</h2>
+        <p className="text-sm text-ink">
+          <strong>Find income ideas</strong> searches live jobs, local businesses on the map,
+          demand trends and forum discussions near your city — for example Pune or Ahmedabad.
+          <strong> Find customers</strong> searches businesses on the map and reads their public
+          reviews for pain signals, plus one competitor search.
         </p>
-        <p>
-          A search takes 10–40 seconds (longer after idle while the server wakes up). Results
-          can be partial when a data source fails, and a repeated search costs nothing
-          because it is served from cache.
+        <p className="text-sm text-ink">
+          A search takes 10–40 seconds. It takes longer after idle while the server wakes up.
+          Business websites are never fetched. Nothing is ever sent automatically.
         </p>
-        <p>
-          Limits that protect everyone: searches are rate-limited per IP address, request
-          bodies are capped at 20&nbsp;KB, and every failure shows a support code you can
-          share when asking for help — never raw server text.
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-ink">How EarnScore is computed</h2>
+        <p className="text-sm text-ink">
+          EarnScore blends five signals: 30% Demand, 20% Fit, 20% Trust, 15% Low competition
+          and 15% Easy to start. Lead scores blend 40% mid-level fit, 30% pain signals, 15%
+          reachability and 15% no-software signal.
+        </p>
+        <p className="text-sm text-ink">
+          Guardrails only lower scores, and every adjustment is listed under “How this score
+          was built”. Income figures are always estimates, never promises.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-ink">Scam Shield: what it checks</h2>
+        <p className="text-sm text-ink">
+          Every job is scanned for text patterns such as upfront-fee demands, vague pay and
+          personal-data requests. Matches become readable flags with a Low, Medium or High
+          risk badge.
+        </p>
+        <p className="text-sm text-ink">
+          Its limits matter more: it reads text, not intent. A “low risk” badge cannot
+          guarantee a job is safe. High-risk listings stay visible with a caution panel —
+          verify every employer before paying money or sharing documents.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-ink">Caching and credits</h2>
+        <p className="text-sm text-ink">
+          Searches hit a cache first. A repeated identical search costs zero credits and
+          reports it. Every results page shows “credits used” and “served from cache” so you
+          can see exactly what a search cost.
+        </p>
+        <p className="text-sm text-ink">
+          Limits protect everyone: searches are rate-limited per IP address, request bodies
+          are capped at 20&nbsp;KB, and failures show a support code — never raw server text.
         </p>
       </div>
     </section>

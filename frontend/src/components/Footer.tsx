@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useHealth } from '../api/hooks';
 
 /** Site footer: honesty disclaimers, API status, version. Never blocks. */
@@ -42,6 +43,20 @@ export function Footer() {
           {data?.version ? <span>Backend v{data.version}</span> : null}
           <span>Frontend v1.0.0</span>
         </div>
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-4 gap-y-1">
+          <Link to="/how-it-works" className="font-semibold text-ink underline">
+            How it works
+          </Link>
+          <Link to="/privacy" className="font-semibold text-ink underline">
+            Privacy
+          </Link>
+          <Link to="/terms" className="font-semibold text-ink underline">
+            Terms
+          </Link>
+          <Link to="/responsible-use" className="font-semibold text-ink underline">
+            Responsible use
+          </Link>
+        </nav>
       </div>
     </footer>
   );

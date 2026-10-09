@@ -140,6 +140,22 @@ body {
   background-image: linear-gradient(135deg, #4f46e5 0%, #0f766e 100%);
 }
 
+/* Hero glow: slow gradient pan, stilled under reduced motion. */
+@keyframes er-hero-pan {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+.hero-glow {
+  background-image: linear-gradient(120deg, var(--surface), var(--raised), var(--surface));
+  background-size: 200% 100%;
+  animation: er-hero-pan 12s ease-in-out infinite alternate;
+}
+
 /* Result reveal motion. */
 @keyframes er-fade-up {
   from {

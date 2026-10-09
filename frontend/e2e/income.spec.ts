@@ -206,7 +206,8 @@ test('income keyboard-only flow reaches and focuses results', async ({ page }) =
   expect(seriousOrCritical(results.violations)).toEqual([]);
 });
 
-test('income alias / still serves the search page', async ({ page }) => {
+test('landing links into the income app', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('link', { name: 'Find my opportunities' }).first().click();
   await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
 });

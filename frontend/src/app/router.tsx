@@ -10,11 +10,23 @@ import { Spinner } from '../components/ui/Spinner';
 // Route-level splitting: page chunks load on demand. Heavy libraries
 // (Leaflet, Recharts) arrive the same way with their components.
 const HomePage = lazy(() => import('../pages/HomePage').then((m) => ({ default: m.HomePage })));
+const LandingPage = lazy(() =>
+  import('../pages/LandingPage').then((m) => ({ default: m.LandingPage })),
+);
 const CustomersPage = lazy(() =>
   import('../pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
 );
 const HowItWorksPage = lazy(() =>
   import('../pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })),
+);
+const PrivacyPage = lazy(() =>
+  import('../pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
+);
+const TermsPage = lazy(() =>
+  import('../pages/TermsPage').then((m) => ({ default: m.TermsPage })),
+);
+const ResponsibleUsePage = lazy(() =>
+  import('../pages/ResponsibleUsePage').then((m) => ({ default: m.ResponsibleUsePage })),
 );
 const NotFoundPage = lazy(() =>
   import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
@@ -48,11 +60,14 @@ export function AppRoutes() {
           <Suspense fallback={<Spinner label="Loading page" />}>
             <ScrollToTop />
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/app/income" element={<HomePage />} />
               <Route path="/app/customers" element={<CustomersPage />} />
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/responsible-use" element={<ResponsibleUsePage />} />
               {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
