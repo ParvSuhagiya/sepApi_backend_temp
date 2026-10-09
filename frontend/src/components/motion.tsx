@@ -3,6 +3,65 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** Full-page smooth entry: fade + rise, skipped under reduced motion. */
+export function PageTransition({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Gentle infinite float for badges, orbs and HUD chips. */
+export function Float({
+  children,
+  className,
+  offset = 8,
+}: {
+  children: ReactNode;
+  className?: string;
+  offset?: number;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={className}
+      animate={{ y: [0, -offset, 0] }}
+      transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Hover lift wrapper: subtle spring scale used on every Stitch card CTA. */
+export function Lift({ children, className }: { children: ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      whileHover={reduce ? undefined : { y: -3 }}
+      whileTap={reduce ? undefined : { scale: 0.985 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /** Fade-up reveal on scroll into view. Instant when reduced motion is set. */
 export function Reveal({
   children,

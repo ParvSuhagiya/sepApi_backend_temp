@@ -31,6 +31,15 @@ describe('JobCard', () => {
     expect(screen.getByText(label)).toBeInTheDocument();
   });
 
+  it('defaults missing risk to Low and omits the description block without text', () => {
+    const { unmount } = render(
+      <JobCard job={job({ risk: undefined, desc: undefined })} {...props} />,
+    );
+    expect(screen.getByText('Low risk')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show more/i })).not.toBeInTheDocument();
+    unmount();
+  });
+
   it('shows flags as chips and a caution panel only for high risk', () => {
     const { rerender } = render(<JobCard job={job({ risk: 'High' })} {...props} />);
     expect(screen.getByText('Asks for an upfront fee')).toBeInTheDocument();

@@ -5,6 +5,7 @@ export type SeoRoute =
   | '/app/income'
   | '/app/customers'
   | '/app/shortlist'
+  | '/app/overview'
   | '/how-it-works'
   | '/privacy'
   | '/terms'
@@ -31,6 +32,11 @@ const META: Record<SeoRoute, { title: string; description: string }> = {
     title: 'Saved shortlist — EarnRadar',
     description:
       'Your starred leads, jobs and opportunities with notes, CSV export and print. Kept in memory only.',
+  },
+  '/app/overview': {
+    title: 'Executive overview — EarnRadar',
+    description:
+      'Your income ideas, buyer leads, scam blocks and shortlist in one honest dashboard.',
   },
   '/how-it-works': {
     title: 'How EarnRadar works — EarnRadar',

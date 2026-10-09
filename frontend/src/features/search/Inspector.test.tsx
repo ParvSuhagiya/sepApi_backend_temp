@@ -23,4 +23,22 @@ describe('Inspector', () => {
     expect(screen.getByText('Scams blocked')).toBeInTheDocument();
     expect(screen.getByText('Sharma Tailoring')).toBeInTheDocument();
   });
+
+  it('handles unrated places and empty sections honestly', () => {
+    render(
+      <Inspector
+        result={{
+          ...result,
+          opportunities: [],
+          local: [
+            { name: 'Unrated Shop', rating: null, reviews: null },
+            { name: 'Quiet Shop', rating: 3.0, reviews: null },
+          ],
+          jobs: [],
+        }}
+      />,
+    );
+    expect(screen.getByText('Unrated')).toBeInTheDocument();
+    expect(screen.queryByText(/\(\d+ reviews?\)/)).not.toBeInTheDocument();
+  });
 });

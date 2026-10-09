@@ -15,6 +15,45 @@ describe('radar blips', () => {
     expect(tones.has('fit')).toBe(true);
   });
 
+  it('caps lists and flags high-risk jobs and unrated places', () => {
+    const base = searchSuccess as unknown as SearchResponse;
+    const many = Array.from({ length: 6 }, (_, index) => ({
+      ...base.opportunities[0],
+      title: `Idea ${index}`,
+    }));
+    const result: SearchResponse = {
+      ...base,
+      opportunities: many,
+      local: [
+        { name: 'Unrated Shop', rating: null, reviews: null },
+        { name: 'Quiet Shop', rating: 2.5, reviews: null },
+      ],
+      jobs: [
+        {
+          title: 'Risky Gigs',
+          company: 'X',
+          location: 'Y',
+          flags: [],
+          risk: 'High',
+        },
+      ],
+    };
+    const blips = searchBlips(result);
+    expect(blips.filter((blip) => blip.tone === 'fit')).toHaveLength(4);
+    expect(blips.some((blip) => blip.tone === 'risk')).toBe(true);
+    expect(blips.every((blip) => blip.x >= 18 && blip.x <= 82)).toBe(true);
+  });
+
+  it('tones software owners as safe leads', () => {
+    const result = leadsSuccess as unknown as LeadsResponse;
+    expect(leadsBlips(result)[0]?.tone).toBe('fit');
+    const withSoftware: LeadsResponse = {
+      ...result,
+      leads: [{ ...result.leads[0], likely_has_software: true }],
+    };
+    expect(leadsBlips(withSoftware)[0]?.tone).toBe('safe');
+  });
+
   it('maps live leads to score blips', () => {
     const result = leadsSuccess as unknown as LeadsResponse;
     const blips = leadsBlips(result);

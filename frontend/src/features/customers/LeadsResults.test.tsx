@@ -6,7 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LeadsResponse } from '../../api/schemas';
 import { leadsSuccess } from '../../test/fixtures';
 import { ShortlistProvider } from '../shortlist/shortlist';
-import { LeadsNotice, LeadsResultsView } from './LeadsResults';
+import { LeadsNotice, LeadsResults, LeadsResultsView } from './LeadsResults';
+import { LeadsSessionProvider } from './session';
 
 const result = leadsSuccess as unknown as LeadsResponse;
 const input = { offer: 'Billing software for restaurants', city: 'Ahmedabad', max_leads: 10 };
@@ -112,5 +113,24 @@ describe('LeadsNotice', () => {
     render(<LeadsNotice meta={{ ...result.meta, degraded: ['market'], partial: ['reviews'] }} />);
     expect(screen.getByRole('status')).toHaveTextContent(/unavailable: market/i);
     expect(screen.getByRole('status')).toHaveTextContent(/partial data from: reviews/i);
+  });
+});
+
+describe('LeadsResults', () => {
+  it('renders nothing without a settled result', () => {
+    render(
+      <Providers>
+        <LeadsSessionProvider>
+          <LeadsResults onEdit={() => {}} />
+        </LeadsSessionProvider>
+      </Providers>,
+    );
+    expect(screen.queryByRole('heading', { name: /your customer leads/i })).not.toBeInTheDocument();
+  });
+
+  it('throws outside the session provider', () => {
+    expect(() => render(<LeadsResults onEdit={() => {}} />)).toThrow(
+      /inside LeadsSessionProvider/i,
+    );
   });
 });

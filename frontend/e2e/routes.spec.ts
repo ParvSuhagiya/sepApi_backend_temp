@@ -7,6 +7,7 @@ const ROUTES = [
   '/app/customers',
   '/customers',
   '/app/shortlist',
+  '/app/overview',
   '/how-it-works',
   '/privacy',
   '/terms',
@@ -26,6 +27,8 @@ for (const path of ROUTES) {
     await expect.poll(async () =>
       page.evaluate(() => document.documentElement.dataset.theme),
     ).not.toBe('');
+    // Let 150–200 ms color transitions settle so axe samples final colors.
+    await page.waitForTimeout(500);
     const dark = await new AxeBuilder({ page }).analyze();
     expect(dark.violations).toEqual([]);
   });

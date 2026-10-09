@@ -114,6 +114,8 @@ test('income happy path renders results with no horizontal scroll', async ({ pag
   );
   expect(overflow).toBeLessThanOrEqual(1);
 
+  // Let reveal animations and count-ups settle so axe samples final colors.
+  await page.waitForTimeout(800);
   const results = await new AxeBuilder({ page }).analyze();
   expect(seriousOrCritical(results.violations)).toEqual([]);
 });
@@ -202,6 +204,8 @@ test('income keyboard-only flow reaches and focuses results', async ({ page }) =
   await expect(resultsHeading).toBeVisible();
   await expect(resultsHeading).toBeFocused();
 
+  // Let reveal animations and count-ups settle so axe samples final colors.
+  await page.waitForTimeout(800);
   const results = await new AxeBuilder({ page }).analyze();
   expect(seriousOrCritical(results.violations)).toEqual([]);
 });

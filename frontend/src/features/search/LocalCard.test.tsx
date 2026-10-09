@@ -64,6 +64,16 @@ describe('LocalCard', () => {
       screen.queryByRole('button', { name: /draft whatsapp message/i }),
     ).not.toBeInTheDocument();
   });
+
+  it('notes unrated businesses without stars or counts', () => {
+    render(
+      <Providers>
+        <LocalCard place={{ ...PLACE, rating: null, reviews: null }} profile={PROFILE} />
+      </Providers>,
+    );
+    expect(screen.getByText('Not rated yet')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /rated .* out of 5 stars/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('OutreachButton flow', () => {

@@ -108,7 +108,7 @@ test('customers happy path renders leads with no horizontal scroll', async ({ pa
   await expect(page.getByRole('heading', { name: 'Shankar Restaurant' })).toBeVisible();
   await expect(page.getByText('May already use billing software')).toBeVisible();
   await expect(page.getByText('From public reviews')).toBeVisible();
-  await expect(page.getByText('Price not found')).toBeVisible();
+  await expect(page.getByText('Price not found').first()).toBeVisible();
   await expect(page.getByText(/partial data from: reviews/i)).toBeVisible();
 
   const overflow = await page.evaluate(
@@ -121,6 +121,8 @@ test('customers happy path renders leads with no horizontal scroll', async ({ pa
   await page.getByRole('button', { name: /open shortlist, 1 items/i }).click();
   await expect(page.getByText(/nothing is saved on our servers/i)).toBeVisible();
 
+  // Let reveal animations and count-ups settle so axe samples final colors.
+  await page.waitForTimeout(800);
   const results = await new AxeBuilder({ page }).analyze();
   expect(seriousOrCritical(results.violations)).toEqual([]);
 });
@@ -208,6 +210,8 @@ test('customers keyboard-only flow reaches and focuses results', async ({ page }
   await expect(resultsHeading).toBeVisible();
   await expect(resultsHeading).toBeFocused();
 
+  // Let reveal animations and count-ups settle so axe samples final colors.
+  await page.waitForTimeout(800);
   const results = await new AxeBuilder({ page }).analyze();
   expect(seriousOrCritical(results.violations)).toEqual([]);
 });

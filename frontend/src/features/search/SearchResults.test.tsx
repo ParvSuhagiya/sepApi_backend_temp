@@ -1,9 +1,12 @@
 import { act, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { useState, type ReactNode } from 'react';
 import type { SearchResponse } from '../../api/schemas';
 import { searchSuccess } from '../../test/fixtures';
-import { SearchResultsView } from './SearchResults';
+import { SearchResults, SearchResultsView } from './SearchResults';
+import { SearchSessionProvider } from './session';
 
 const result = searchSuccess as unknown as SearchResponse;
 
@@ -118,5 +121,35 @@ describe('SearchResultsView', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /dismiss notice/i }));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
+describe('SearchResults', () => {
+  function Providers({ children }: { children: ReactNode }) {
+    const [client] = useState(
+      () =>
+        new QueryClient({
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
+        }),
+    );
+    return (
+      <QueryClientProvider client={client}>
+        <SearchSessionProvider>{children}</SearchSessionProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  it('renders nothing without a settled result', () => {
+    render(
+      <Providers>
+        <SearchResults />
+      </Providers>,
+    );
+    expect(
+      screen.queryByRole('heading', { name: /your income opportunities/i }),
+    ).not.toBeInTheDocument();
   });
 });

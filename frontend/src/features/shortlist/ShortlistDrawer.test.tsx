@@ -102,6 +102,17 @@ describe('ShortlistDrawer', () => {
     expect(await (captured as unknown as Blob).text()).toContain('919822012345');
   });
 
+  it('removes items from the drawer', async () => {
+    const user = userEvent.setup();
+    render(<SeededShell />);
+    await user.click(screen.getByRole('button', { name: 'seed' }));
+    await user.click(screen.getByRole('button', { name: 'open drawer' }));
+    expect(screen.getByText('Sharma Tailoring')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByText('Sharma Tailoring')).not.toBeInTheDocument();
+    expect(screen.getByText(/shortlist is empty/i)).toBeInTheDocument();
+  });
+
   it('copies a markdown summary and prints', async () => {
     const user = userEvent.setup();
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});

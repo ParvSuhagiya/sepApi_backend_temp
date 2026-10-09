@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Users } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, NumberField, Textarea } from '../../components/ui/fields';
 import {
@@ -13,7 +14,7 @@ const DEFAULTS: OfferValues = { offer: '', city: '', monthly_price: '', max_lead
 
 const EXAMPLES: ReadonlyArray<{ label: string; values: OfferValues }> = [
   {
-    label: 'Try: Restaurant system',
+    label: 'Restaurant system',
     values: {
       offer:
         'Restaurant management system for mid level restaurants with waiter manager and cook for billing orders and staff duties',
@@ -23,7 +24,7 @@ const EXAMPLES: ReadonlyArray<{ label: string; values: OfferValues }> = [
     },
   },
   {
-    label: 'Try: Gym software',
+    label: 'Gym software',
     values: {
       offer:
         'Gym management software for small gyms with membership tracking attendance and fee reminders for owners and trainers',
@@ -33,7 +34,7 @@ const EXAMPLES: ReadonlyArray<{ label: string; values: OfferValues }> = [
     },
   },
   {
-    label: 'Try: Salon booking',
+    label: 'Salon booking',
     values: {
       offer:
         'Salon booking software for local salons with appointment scheduling reminders and billing for owners and staff',
@@ -50,7 +51,7 @@ export interface OfferFormProps {
   onSubmit: (payload: ValidOffer) => void;
 }
 
-/** Customer offer form. Validation mirrors the backend; integers cast on submit. */
+/** Customer offer form with modern glassmorphism styling and quick fill prompts. */
 export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
   const [values, setValues] = useState<OfferValues>({ ...DEFAULTS, ...initial });
   const [submitted, setSubmitted] = useState(false);
@@ -97,8 +98,9 @@ export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
         event.preventDefault();
         submit();
       }}
+      className="rounded-3xl border border-line/80 bg-raised/90 p-5 sm:p-7 shadow-lg backdrop-blur-xl transition-all"
     >
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-5 md:grid-cols-4">
         <div className="md:col-span-2">
           <Textarea
             id="offer-text"
@@ -110,7 +112,7 @@ export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
             onChange={(event) => set('offer', event.target.value)}
             onKeyDown={handleKeyDown}
             error={errors.offer}
-            hint="Paste freely — no need to restructure your text. Cmd/Ctrl+Enter submits."
+            hint="Describe freely. Press Cmd/Ctrl+Enter to submit."
           />
         </div>
         <div>
@@ -118,11 +120,12 @@ export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
             id="offer-city"
             label="City"
             type="text"
-            placeholder="e.g. Ahmedabad"
+            placeholder="e.g. Ahmedabad, Pune"
             autoComplete="address-level2"
             value={values.city}
             onChange={(event) => set('city', event.target.value)}
             error={errors.city}
+            hint="City where your potential customers are located"
           />
         </div>
         <div className="grid grid-cols-2 gap-4 md:col-span-1 md:grid-cols-2">
@@ -138,7 +141,7 @@ export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
               value={values.monthly_price}
               onChange={(event) => set('monthly_price', event.target.value)}
               error={errors.monthly_price}
-              hint="Optional, per month"
+              hint="Subscription cost"
             />
           </div>
           <div>
@@ -163,32 +166,35 @@ export function OfferForm({ loading, initial, onSubmit }: OfferFormProps) {
               step={1}
               value={values.max_leads === '' ? 5 : Number(values.max_leads) || 5}
               onChange={(event) => set('max_leads', event.target.value)}
-              className="mt-2 h-[44px] w-full accent-brand"
+              className="mt-2.5 h-2 w-full cursor-pointer rounded-lg bg-surface accent-brand"
             />
           </div>
         </div>
       </div>
-      <p className="mt-3 text-sm text-muted">
-        Not sure where to start?{' '}
-        {EXAMPLES.map((example, index) => (
-          <span key={example.label}>
-            {index > 0 ? ' · ' : null}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line/60 pt-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+          <span className="font-semibold text-ink">Try an example:</span>
+          {EXAMPLES.map((example) => (
             <button
+              key={example.label}
               type="button"
               onClick={() => {
                 setValues({ ...example.values });
               }}
-              className="rounded-sm font-semibold text-brand underline"
+              className="rounded-full border border-line/80 bg-surface/80 px-2.5 py-1 text-xs font-semibold text-brand transition-all hover:bg-brand/10 hover:border-brand/40"
             >
-              {example.label}
+              Try: {example.label}
             </button>
-          </span>
-        ))}
-      </p>
-      <div className="mt-4">
-        <Button type="submit" disabled={loading} loading={loading}>
-          {loading ? 'Finding…' : 'Find customers'}
-        </Button>
+          ))}
+        </div>
+
+        <div>
+          <Button type="submit" disabled={loading} loading={loading} className="w-full sm:w-auto">
+            <Users className="h-4 w-4" />
+            <span>{loading ? 'Finding…' : 'Find customers'}</span>
+          </Button>
+        </div>
       </div>
     </form>
   );

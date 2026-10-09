@@ -1,11 +1,12 @@
 import { Suspense, lazy } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { Providers } from './providers';
 import { ScrollToTop } from './ScrollToTop';
 import { Footer } from '../components/Footer';
 import { Header } from '../components/Header';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { PageTransition } from '../components/motion';
 import { Spinner } from '../components/ui/Spinner';
 
 // Route-level splitting: page chunks load on demand. Heavy libraries
@@ -20,15 +21,16 @@ const CustomersPage = lazy(() =>
 const ShortlistPage = lazy(() =>
   import('../pages/ShortlistPage').then((m) => ({ default: m.ShortlistPage })),
 );
+const OverviewPage = lazy(() =>
+  import('../pages/OverviewPage').then((m) => ({ default: m.OverviewPage })),
+);
 const HowItWorksPage = lazy(() =>
   import('../pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })),
 );
 const PrivacyPage = lazy(() =>
   import('../pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
 );
-const TermsPage = lazy(() =>
-  import('../pages/TermsPage').then((m) => ({ default: m.TermsPage })),
-);
+const TermsPage = lazy(() => import('../pages/TermsPage').then((m) => ({ default: m.TermsPage })));
 const ResponsibleUsePage = lazy(() =>
   import('../pages/ResponsibleUsePage').then((m) => ({ default: m.ResponsibleUsePage })),
 );
@@ -50,6 +52,7 @@ const DevUiRoute =
 
 /** App shell: skip link, header, main landmark, footer, error boundary. */
 export function AppRoutes() {
+  const { pathname } = useLocation();
   return (
     <Providers>
       <a
@@ -60,23 +63,30 @@ export function AppRoutes() {
       </a>
       <Header />
       <OfflineBanner />
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+      >
         <ErrorBoundary>
           <Suspense fallback={<Spinner label="Loading page" />}>
             <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/app/income" element={<HomePage />} />
-              <Route path="/app/customers" element={<CustomersPage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/app/shortlist" element={<ShortlistPage />} />
-              <Route path="/how-it-works" element={<HowItWorksPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/responsible-use" element={<ResponsibleUsePage />} />
-              {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <PageTransition key={pathname}>
+              <Routes location={pathname}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/app/income" element={<HomePage />} />
+                <Route path="/app/customers" element={<CustomersPage />} />
+                <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/app/shortlist" element={<ShortlistPage />} />
+                <Route path="/app/overview" element={<OverviewPage />} />
+                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/responsible-use" element={<ResponsibleUsePage />} />
+                {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </PageTransition>
           </Suspense>
         </ErrorBoundary>
       </main>

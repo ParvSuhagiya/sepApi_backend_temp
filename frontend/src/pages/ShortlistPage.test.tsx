@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useEffect, useState, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { LeadsSessionProvider } from '../features/customers/session';
@@ -38,6 +39,13 @@ function Seed() {
       subtitle: 'Tailor',
       phone: null,
     });
+    shortlist.toggle({
+      id: 'job:Tailor needed|ABC',
+      kind: 'job',
+      title: 'Tailor needed',
+      subtitle: 'ABC',
+      phone: null,
+    });
   }, []);
   return null;
 }
@@ -63,7 +71,24 @@ describe('ShortlistPage', () => {
         <ShortlistPage />
       </Shell>,
     );
-    expect(screen.getByText(/1 saved — 1 leads · 0 jobs · 0 opportunities\./)).toBeInTheDocument();
+    expect(screen.getByText(/2 saved — 1 leads · 1 jobs · 0 opportunities\./)).toBeInTheDocument();
     expect(screen.getByText('Sharma Tailoring')).toBeInTheDocument();
+    expect(screen.getByText('Tailor needed')).toBeInTheDocument();
+  });
+
+  it('filters items by kind', async () => {
+    const user = userEvent.setup();
+    render(
+      <Shell>
+        <Seed />
+        <ShortlistPage />
+      </Shell>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Leads1' }));
+    expect(screen.getByText('Sharma Tailoring')).toBeInTheDocument();
+    expect(screen.queryByText('Tailor needed')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Jobs1' }));
+    expect(screen.getByText('Tailor needed')).toBeInTheDocument();
+    expect(screen.queryByText('Sharma Tailoring')).not.toBeInTheDocument();
   });
 });

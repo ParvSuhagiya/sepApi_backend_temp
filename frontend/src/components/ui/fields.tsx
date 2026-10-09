@@ -8,10 +8,10 @@ interface FieldProps {
 }
 
 const inputClass =
-  'mt-1 w-full rounded-md border border-line bg-raised px-3 py-2 text-base text-ink placeholder:text-muted';
+  'mt-1.5 w-full rounded-xl border border-line/80 bg-raised/90 px-3.5 py-2.5 text-base text-ink shadow-sm placeholder:text-muted/60 transition-all duration-150 focus:border-brand focus:ring-2 focus:ring-brand/20';
 
 const prefixedInputClass =
-  'mt-1 w-full rounded-md border border-line bg-raised py-2 pl-8 pr-3 text-base text-ink placeholder:text-muted';
+  'mt-1.5 w-full rounded-xl border border-line/80 bg-raised/90 py-2.5 pl-8 pr-3.5 text-base text-ink shadow-sm placeholder:text-muted/60 transition-all duration-150 focus:border-brand focus:ring-2 focus:ring-brand/20';
 
 function describedBy(id: string, error?: string, hint?: string): string | undefined {
   const parts: string[] = [];
@@ -23,8 +23,8 @@ function describedBy(id: string, error?: string, hint?: string): string | undefi
 export function FieldError({ id, error }: { id: string; error?: string }) {
   if (!error) return null;
   return (
-    <p id={`${id}-error`} className="mt-1 text-sm text-tone-red-fg">
-      {error}
+    <p id={`${id}-error`} className="mt-1.5 text-xs font-semibold text-tone-red-fg flex items-center gap-1 animate-reveal">
+      <span>●</span> {error}
     </p>
   );
 }
@@ -48,21 +48,23 @@ interface InputProps
 export function Input({ id, label, error, hint, prefix, ...rest }: InputProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
+      <label htmlFor={id} className="block text-sm font-semibold text-ink">
         {label}
       </label>
       <div className="relative">
         {prefix ? (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base text-muted"
+            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base font-semibold text-muted"
           >
             {prefix}
           </span>
         ) : null}
         <input
           id={id}
-          className={prefix ? prefixedInputClass : inputClass}
+          className={`${prefix ? prefixedInputClass : inputClass} ${
+            error ? 'border-tone-red-border focus:ring-rose-500/20' : ''
+          }`}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy(id, error, hint)}
           {...rest}
@@ -84,23 +86,27 @@ export function Textarea({ id, label, error, hint, maxLength, value, ...rest }: 
   const count = typeof value === 'string' ? value.length : 0;
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
-        {label}
-      </label>
+      <div className="flex items-center justify-between">
+        <label htmlFor={id} className="block text-sm font-semibold text-ink">
+          {label}
+        </label>
+        {typeof maxLength === 'number' && (
+          <p className="mt-1 text-xs text-muted" aria-live="off">
+            {count}/{maxLength} characters
+          </p>
+        )}
+      </div>
       <textarea
         id={id}
-        className={inputClass}
+        className={`${inputClass} resize-y min-h-[90px] ${
+          error ? 'border-tone-red-border focus:ring-rose-500/20' : ''
+        }`}
         maxLength={maxLength}
         value={value}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy(id, error, hint)}
         {...rest}
       />
-      {typeof maxLength === 'number' && (
-        <p className="mt-1 text-xs text-muted" aria-live="off">
-          {count}/{maxLength} characters
-        </p>
-      )}
       <FieldError id={id} error={error} />
       <FieldHint id={id} hint={hint} />
     </div>
@@ -124,12 +130,14 @@ interface SelectProps
 export function Select({ id, label, error, hint, options, ...rest }: SelectProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
+      <label htmlFor={id} className="block text-sm font-semibold text-ink">
         {label}
       </label>
       <select
         id={id}
-        className={inputClass}
+        className={`${inputClass} ${
+          error ? 'border-tone-red-border focus:ring-rose-500/20' : ''
+        }`}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy(id, error, hint)}
         {...rest}

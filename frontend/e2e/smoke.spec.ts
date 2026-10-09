@@ -27,6 +27,8 @@ test('landing renders hero, CTAs and shell with no a11y violations', async ({ pa
   const toggle = page.getByRole('button', { name: /switch to (dark|light) theme/i });
   await toggle.click();
   await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.theme)).not.toBe('');
+  // Let color transitions settle so axe samples final colors.
+  await page.waitForTimeout(500);
 
   // Skip link targets the main landmark.
   await expect(page.locator('#main-content')).toBeVisible();

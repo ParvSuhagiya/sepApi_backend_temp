@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { useState, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { ENV } from '../../env';
@@ -185,6 +185,20 @@ describe('leads session', () => {
     await user.click(screen.getByRole('button', { name: 'reset' }));
     expect(screen.getByTestId('status')).toHaveTextContent('idle');
     expect(screen.getByTestId('leads')).toHaveTextContent('none');
+  });
+
+  it('maps a network failure to friendly copy without raw text', async () => {
+    const user = userEvent.setup();
+    server.use(http.post(api('/api/leads'), () => HttpResponse.error()));
+    render(
+      <Providers>
+        <Probe />
+      </Providers>,
+    );
+    // The client retries once, then surfaces the friendly fallback.
+    await user.click(screen.getByRole('button', { name: 'run' }));
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('error'));
+    expect(screen.getByTestId('error')).toHaveTextContent(/check your connection/i);
   });
 
   it('keeps results when the consumer unmounts and remounts', async () => {

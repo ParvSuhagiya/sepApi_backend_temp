@@ -10,7 +10,7 @@ interface DialogProps {
 const FOCUSABLE =
   'a[href], button:not([disabled]):not([tabindex="-1"]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
-/** Modal dialog (or bottom sheet) with focus trap and Esc to close. */
+/** Modal dialog (or bottom sheet) with focus trap, backdrop blur, and Esc to close. */
 export function Dialog({ title, onClose, children, variant = 'dialog' }: DialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -58,8 +58,8 @@ export function Dialog({ title, onClose, children, variant = 'dialog' }: DialogP
 
   const panelClass =
     variant === 'sheet'
-      ? 'fixed inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-xl'
-      : 'fixed left-1/2 top-1/2 max-h-[85vh] w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl';
+      ? 'fixed inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl sm:max-w-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2'
+      : 'fixed left-1/2 top-1/2 max-h-[85vh] w-[min(34rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl';
 
   return (
     <>
@@ -69,7 +69,7 @@ export function Dialog({ title, onClose, children, variant = 'dialog' }: DialogP
         tabIndex={-1}
         aria-label="Close dialog"
         onClick={onClose}
-        className="fixed inset-0 z-[var(--z-dialog)] cursor-default bg-slate-950/50"
+        className="fixed inset-0 z-[var(--z-dialog)] cursor-default bg-slate-950/60 backdrop-blur-sm transition-opacity"
       />
       <div
         ref={panelRef}
@@ -77,12 +77,12 @@ export function Dialog({ title, onClose, children, variant = 'dialog' }: DialogP
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`${panelClass} z-[var(--z-dialog)] border border-line bg-raised p-5 shadow-lg`}
+        className={`${panelClass} z-[var(--z-dialog)] border border-line/80 bg-raised p-6 shadow-2xl backdrop-blur-xl animate-reveal`}
       >
-        <h2 id={titleId} className="text-lg font-semibold text-ink">
+        <h2 id={titleId} className="text-xl font-bold tracking-tight text-ink border-b border-line/60 pb-3">
           {title}
         </h2>
-        <div className="mt-3 text-sm text-ink">{children}</div>
+        <div className="mt-4 text-sm text-ink">{children}</div>
       </div>
     </>
   );
