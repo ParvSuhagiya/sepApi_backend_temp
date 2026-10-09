@@ -1,7 +1,10 @@
 /** Terms: plain-English ground rules. */
+import { Seo } from '../components/Seo';
+
 export function TermsPage() {
   return (
     <section aria-labelledby="terms-heading" className="flex flex-col gap-3">
+      <Seo route="/terms" />
       <h1 id="terms-heading" className="text-2xl font-bold text-ink">
         Terms
       </h1>

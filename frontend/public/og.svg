@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="EarnRadar — income ideas and customer finder for India">
+  <rect width="1200" height="630" fill="#f1f5f9"/>
+  <circle cx="600" cy="270" r="150" fill="none" stroke="#4f46e5" stroke-width="10"/>
+  <circle cx="600" cy="270" r="95" fill="none" stroke="#4f46e5" stroke-width="6" opacity="0.6"/>
+  <circle cx="600" cy="270" r="14" fill="#0f766e"/>
+  <line x1="600" y1="270" x2="705" y2="195" stroke="#0f766e" stroke-width="10" stroke-linecap="round"/>
+  <text x="600" y="480" text-anchor="middle" font-family="sans-serif" font-size="72" font-weight="700" fill="#0f172a">EarnRadar</text>
+  <text x="600" y="540" text-anchor="middle" font-family="sans-serif" font-size="32" fill="#475569">Income ideas &amp; customer finder for India</text>
+</svg>

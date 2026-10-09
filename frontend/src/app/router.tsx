@@ -4,6 +4,7 @@ import { Providers } from './providers';
 import { ScrollToTop } from './ScrollToTop';
 import { Footer } from '../components/Footer';
 import { Header } from '../components/Header';
+import { OfflineBanner } from '../components/OfflineBanner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Spinner } from '../components/ui/Spinner';
 
@@ -55,7 +56,8 @@ export function AppRoutes() {
         Skip to content
       </a>
       <Header />
-      <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+      <OfflineBanner />
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
         <ErrorBoundary>
           <Suspense fallback={<Spinner label="Loading page" />}>
             <ScrollToTop />

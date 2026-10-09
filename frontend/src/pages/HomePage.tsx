@@ -1,5 +1,6 @@
 import { Button } from '../components/ui/Button';
 import { CopyButton } from '../components/ui/CopyButton';
+import { Seo } from '../components/Seo';
 import type { ApiError } from '../api/errors';
 import { ProfileForm } from '../features/search/ProfileForm';
 import { SearchProgress, SearchResultsSkeleton } from '../features/search/SearchProgress';
@@ -32,6 +33,7 @@ export function HomePage() {
 
   return (
     <section aria-labelledby="income-heading" className="flex flex-col gap-6">
+      <Seo route="/app/income" />
       <div>
         <h1 id="income-heading" className="text-2xl font-bold text-ink">
           Find income ideas

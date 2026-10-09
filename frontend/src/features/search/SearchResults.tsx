@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import type { SearchInput } from '../../api/client';
 import type { SearchResponse } from '../../api/schemas';
 import { useOptionalSearchSession, useSearchSession } from './session';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { EfficiencyStrip } from './EfficiencyStrip';
 import { ForumCard } from './ForumCard';
 import { JobList } from './JobList';
@@ -145,15 +146,21 @@ export function SearchResultsView({
           Map
         </h3>
         <div className="mt-3">
-          <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-            <LazyJobsMap
-              jobs={result.jobs}
-              places={result.local}
-              cityCenter={result.meta.city_center}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-            />
-          </Suspense>
+          <ErrorBoundary
+            compact
+            title="Map failed to load"
+            message="The jobs and businesses above are unaffected. Try the list views instead."
+          >
+            <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+              <LazyJobsMap
+                jobs={result.jobs}
+                places={result.local}
+                cityCenter={result.meta.city_center}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </section>
       <section id="local" aria-labelledby="local-heading">
@@ -169,13 +176,19 @@ export function SearchResultsView({
           Demand trends
         </h3>
         <div className="mt-3">
-          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-            <LazyTrendChart
-              keyword={result.trend_keyword}
-              growth={result.trend_growth}
-              points={result.trend}
-            />
-          </Suspense>
+          <ErrorBoundary
+            compact
+            title="Trend chart failed to load"
+            message="The opportunities above are unaffected."
+          >
+            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+              <LazyTrendChart
+                keyword={result.trend_keyword}
+                growth={result.trend_growth}
+                points={result.trend}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </section>
       <section id="forum" aria-labelledby="forum-heading">

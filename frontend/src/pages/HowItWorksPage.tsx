@@ -1,7 +1,10 @@
 /** Honest explainer page: what the app does and does not promise. */
+import { Seo } from '../components/Seo';
+
 export function HowItWorksPage() {
   return (
     <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-6">
+      <Seo route="/how-it-works" />
       <div>
         <h1 id="how-it-works-heading" className="text-2xl font-bold text-ink">
           How EarnRadar works

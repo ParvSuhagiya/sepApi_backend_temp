@@ -3,6 +3,10 @@ import { Button } from './ui/Button';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  /** Compact inline fallback for sections (e.g. maps) instead of the page crash UI. */
+  compact?: boolean;
+  title?: string;
+  message?: string;
 }
 
 interface ErrorBoundaryState {
@@ -19,6 +23,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (!this.state.failed) return this.props.children;
+    if (this.props.compact) {
+      return (
+        <div
+          role="alert"
+          className="rounded-lg border border-line bg-raised p-4 text-sm text-ink"
+        >
+          <p className="font-bold">{this.props.title ?? 'This section failed to load'}</p>
+          <p className="mt-1 text-muted">
+            {this.props.message ?? 'The rest of your results are unaffected.'}
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center">
         <h1 className="text-xl font-bold text-ink">Something went wrong</h1>

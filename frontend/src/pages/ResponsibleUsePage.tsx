@@ -1,7 +1,10 @@
 /** Responsible use: outreach etiquette and verification. Engineering guidance, not legal advice. */
+import { Seo } from '../components/Seo';
+
 export function ResponsibleUsePage() {
   return (
     <section aria-labelledby="responsible-use-heading" className="flex flex-col gap-3">
+      <Seo route="/responsible-use" />
       <h1 id="responsible-use-heading" className="text-2xl font-bold text-ink">
         Responsible use
       </h1>

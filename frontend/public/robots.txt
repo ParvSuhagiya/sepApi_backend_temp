@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Production origin is https://earnrader.vercel.app — keep sitemap.xml in sync.
+Sitemap: https://earnrader.vercel.app/sitemap.xml

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Seo } from '../components/Seo';
 import { RiskBadge } from '../components/ui/RiskBadge';
 import { ScoreRing } from '../components/ui/ScoreBadge';
 
@@ -96,6 +97,7 @@ export function ProductMock() {
 export function LandingPage() {
   return (
     <div className="flex flex-col gap-12">
+      <Seo route="/" />
       <section aria-labelledby="landing-heading" className="hero-glow rounded-xl px-2 py-10 text-center">
         <h1 id="landing-heading" className="mx-auto max-w-2xl text-3xl font-bold text-ink sm:text-4xl">
           Realistic income ideas for India

@@ -1,7 +1,10 @@
 /** Privacy: exactly what the browser stores. */
+import { Seo } from '../components/Seo';
+
 export function PrivacyPage() {
   return (
     <section aria-labelledby="privacy-heading" className="flex flex-col gap-3">
+      <Seo route="/privacy" />
       <h1 id="privacy-heading" className="text-2xl font-bold text-ink">
         Privacy
       </h1>

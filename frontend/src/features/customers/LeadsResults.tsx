@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import type { LeadsInput } from '../../api/client';
 import type { LeadsResponse } from '../../api/schemas';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { Skeleton } from '../../components/ui/feedback';
 import { useOptionalShortlist } from '../shortlist/shortlist';
 import { LeadCard } from './LeadCard';
@@ -153,14 +154,20 @@ export function LeadsResultsView({
           Map
         </h3>
         <div className="mt-3">
-          <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-            <LazyLeadsMap
-              leads={result.leads}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              shortlistedIds={shortlistedIds}
-            />
-          </Suspense>
+          <ErrorBoundary
+            compact
+            title="Map failed to load"
+            message="The ranked leads above are unaffected."
+          >
+            <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+              <LazyLeadsMap
+                leads={result.leads}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                shortlistedIds={shortlistedIds}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </section>
       <section aria-labelledby="market-notes-heading">

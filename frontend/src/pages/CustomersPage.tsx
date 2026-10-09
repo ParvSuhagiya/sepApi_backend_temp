@@ -1,5 +1,6 @@
 import { Button } from '../components/ui/Button';
 import { CopyButton } from '../components/ui/CopyButton';
+import { Seo } from '../components/Seo';
 import type { ApiError } from '../api/errors';
 import { useLeadsSession } from '../features/customers/session';
 import { LeadsProgress, LeadsResultsSkeleton } from '../features/customers/LeadsProgress';
@@ -42,6 +43,7 @@ export function CustomersPage() {
 
   return (
     <section aria-labelledby="customers-heading" className="flex flex-col gap-6">
+      <Seo route="/app/customers" />
       <div>
         <h1 id="customers-heading" className="text-2xl font-bold text-ink">
           Find customers for my product
