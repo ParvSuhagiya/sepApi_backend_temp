@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import type { SearchResponse } from '../../api/schemas';
 import { useSearchSession } from './session';
 import { EfficiencyStrip } from './EfficiencyStrip';
+import { JobList } from './JobList';
 import { OpportunityList } from './OpportunityList';
 import { ResultNotice } from './ResultNotice';
+import { Skeleton } from '../../components/ui/feedback';
 
 export const RESULT_SECTIONS = [
   { id: 'opportunities', label: 'Opportunities' },
@@ -13,6 +15,11 @@ export const RESULT_SECTIONS = [
   { id: 'trends', label: 'Trends' },
   { id: 'forum', label: 'Forum' },
 ] as const;
+
+// Lazy map chunk (Leaflet + clustering stay out of the landing bundle).
+const LazyJobsMap = lazy(() =>
+  import('../map/JobsMap').then((module) => ({ default: module.JobsMap })),
+);
 
 function useActiveSection(ids: ReadonlyArray<string>): string | null {
   const [active, setActive] = useState<string | null>(null);
@@ -84,6 +91,7 @@ export function ResultsNav() {
 /** Full results layout. Section bodies arrive in steps 2.3–2.5. */
 export function SearchResultsView({ result }: { result: SearchResponse }) {
   const count = result.opportunities.length;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -113,11 +121,25 @@ export function SearchResultsView({ result }: { result: SearchResponse }) {
         <h3 id="jobs-heading" className="text-lg font-bold text-ink">
           Live jobs
         </h3>
+        <div className="mt-3">
+          <JobList jobs={result.jobs} selectedId={selectedId} onSelect={setSelectedId} />
+        </div>
       </section>
       <section id="map" aria-labelledby="map-heading">
         <h3 id="map-heading" className="text-lg font-bold text-ink">
           Map
         </h3>
+        <div className="mt-3">
+          <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+            <LazyJobsMap
+              jobs={result.jobs}
+              places={result.local}
+              cityCenter={result.meta.city_center}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
+          </Suspense>
+        </div>
       </section>
       <section id="local" aria-labelledby="local-heading">
         <h3 id="local-heading" className="text-lg font-bold text-ink">

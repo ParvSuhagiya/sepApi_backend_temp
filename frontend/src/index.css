@@ -210,3 +210,86 @@ body {
     padding: 24px;
   }
 }
+
+/* Map pins: shape + letter + colour, so risk is never colour alone. */
+.map-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(2 6 23 / 0.4);
+}
+
+.map-pin-low {
+  background: #15803d;
+  border-radius: 50%;
+}
+
+.map-pin-medium {
+  background: #b45309;
+  border-radius: 6px;
+}
+
+.map-pin-high {
+  background: #b91c1c;
+  border-radius: 2px;
+}
+
+.map-pin-place {
+  background: #0f766e;
+  border-radius: 4px;
+  transform: rotate(45deg);
+}
+
+.map-pin-selected {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.map-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(2 6 23 / 0.4);
+}
+
+/* Legend swatches mirror the pin shapes at small size. */
+.legend-shape {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+}
+
+.legend-shape-low {
+  background: #15803d;
+  border-radius: 50%;
+}
+
+.legend-shape-medium {
+  background: #b45309;
+  border-radius: 3px;
+}
+
+.legend-shape-high {
+  background: #b91c1c;
+  border-radius: 1px;
+}
+
+.legend-shape-place {
+  background: #0f766e;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
