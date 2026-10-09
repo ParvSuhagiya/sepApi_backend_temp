@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SearchResponse } from '../../api/schemas';
 import { useSearchSession } from './session';
 import { EfficiencyStrip } from './EfficiencyStrip';
+import { OpportunityList } from './OpportunityList';
 import { ResultNotice } from './ResultNotice';
 
 export const RESULT_SECTIONS = [
@@ -104,6 +105,9 @@ export function SearchResultsView({ result }: { result: SearchResponse }) {
         <h3 id="opportunities-heading" className="text-lg font-bold text-ink">
           Top opportunities
         </h3>
+        <div className="mt-3">
+          <OpportunityList opportunities={result.opportunities} />
+        </div>
       </section>
       <section id="jobs" aria-labelledby="jobs-heading">
         <h3 id="jobs-heading" className="text-lg font-bold text-ink">
