@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { ToastProvider } from '../components/ui/Toast';
+import { SearchSessionProvider } from '../features/search/session';
 import { ThemeProvider } from './theme';
 
-/** App-wide providers: theme, toasts, server-state cache. */
+/** App-wide providers: theme, toasts, server-state cache, search session. */
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
@@ -22,7 +23,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <QueryClientProvider client={client}>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <SearchSessionProvider>{children}</SearchSessionProvider>
+        </ToastProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

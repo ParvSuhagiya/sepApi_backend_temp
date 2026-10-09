@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
 interface FieldProps {
   id: string;
@@ -9,6 +9,9 @@ interface FieldProps {
 
 const inputClass =
   'mt-1 w-full rounded-md border border-line bg-raised px-3 py-2 text-base text-ink placeholder:text-muted';
+
+const prefixedInputClass =
+  'mt-1 w-full rounded-md border border-line bg-raised py-2 pl-8 pr-3 text-base text-ink placeholder:text-muted';
 
 function describedBy(id: string, error?: string, hint?: string): string | undefined {
   const parts: string[] = [];
@@ -36,22 +39,35 @@ export function FieldHint({ id, hint }: { id: string; hint?: string }) {
 }
 
 interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'>,
-    FieldProps {}
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'prefix'>,
+    FieldProps {
+  /** Non-interactive adornment rendered inside the field (e.g. a ₹ prefix). */
+  prefix?: ReactNode;
+}
 
-export function Input({ id, label, error, hint, ...rest }: InputProps) {
+export function Input({ id, label, error, hint, prefix, ...rest }: InputProps) {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-ink">
         {label}
       </label>
-      <input
-        id={id}
-        className={inputClass}
-        aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(id, error, hint)}
-        {...rest}
-      />
+      <div className="relative">
+        {prefix ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base text-muted"
+          >
+            {prefix}
+          </span>
+        ) : null}
+        <input
+          id={id}
+          className={prefix ? prefixedInputClass : inputClass}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy(id, error, hint)}
+          {...rest}
+        />
+      </div>
       <FieldError id={id} error={error} />
       <FieldHint id={id} hint={hint} />
     </div>
