@@ -101,7 +101,7 @@ test('customers happy path renders leads with no horizontal scroll', async ({ pa
     });
   });
   await page.goto('/app/customers');
-  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'B2B Customer Leads Radar' })).toBeVisible();
   await fillOffer(page);
   await page.getByRole('button', { name: /^find customers$/i }).click();
   await expect(page.getByRole('heading', { name: /your customer leads/i })).toBeVisible();
@@ -172,7 +172,7 @@ test('customers cold-start shows waking message on 502 retry', async ({ page }) 
         }),
       });
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -223,8 +223,9 @@ test('customers tab hides when the mode is disabled', async ({ page }) => {
     });
   });
   await page.goto('/app/income');
-  await expect(page.getByRole('tab', { name: /find income ideas/i })).toBeVisible();
-  await expect(page.getByRole('tab', { name: /customers/i })).not.toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Income Discovery' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'B2B Leads Radar' })).not.toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Saved Shortlist' })).toBeVisible();
 });
 
 test('customers alias /customers still serves the page', async ({ page }) => {
@@ -236,5 +237,5 @@ test('customers alias /customers still serves the page', async ({ page }) => {
     });
   });
   await page.goto('/customers');
-  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'B2B Customer Leads Radar' })).toBeVisible();
 });

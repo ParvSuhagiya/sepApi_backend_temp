@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Class-driven dark mode: the app flips [data-theme] on <html>, not the
+   OS color scheme, so the `dark:` variant must follow the attribute. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /* ---------------------------------------------------------------------------
  * EarnRadar Modern Design Tokens & Glassmorphic Design System.
  * Semantic colors are CSS variables so light and dark themes switch cleanly

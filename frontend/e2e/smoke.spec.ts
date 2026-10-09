@@ -13,15 +13,15 @@ test('landing renders hero, CTAs and shell with no a11y violations', async ({ pa
 
   // Primary CTA reaches the income app; secondary reaches customers.
   await page.getByRole('link', { name: 'Find my opportunities' }).first().click();
-  await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Income Discovery Radar' })).toBeVisible();
   await page.goto('/');
   await page.getByRole('link', { name: 'Find customers for my product' }).first().click();
-  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'B2B Customer Leads Radar' })).toBeVisible();
 
   // Mode tabs navigate.
   await page.goto('/');
-  await page.getByRole('tab', { name: /find customers/i }).click();
-  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+  await page.getByRole('tab', { name: 'B2B Leads Radar' }).click();
+  await expect(page.getByRole('heading', { name: 'B2B Customer Leads Radar' })).toBeVisible();
 
   // Theme toggle flips the theme attribute.
   const toggle = page.getByRole('button', { name: /switch to (dark|light) theme/i });
@@ -37,7 +37,7 @@ test('landing renders hero, CTAs and shell with no a11y violations', async ({ pa
 
 test('customers, explainer, 404 and dev-route exclusion', async ({ page }) => {
   await page.goto('/customers');
-  await expect(page.getByRole('heading', { name: /find customers for my product/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'B2B Customer Leads Radar' })).toBeVisible();
 
   await page.goto('/how-it-works');
   await expect(page.getByRole('heading', { name: /how earnradar works/i })).toBeVisible();

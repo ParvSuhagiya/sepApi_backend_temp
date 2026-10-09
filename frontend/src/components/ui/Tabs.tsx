@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { motion } from 'framer-motion';
 
 interface TabsProps {
   tabs: ReadonlyArray<{ id: string; label: string }>;
@@ -7,7 +8,7 @@ interface TabsProps {
   label: string;
 }
 
-/** Accessible tabs with roving tabindex and full arrow-key support. */
+/** Accessible tabs with roving tabindex, full arrow-key support, and fluid Framer Motion indicator. */
 export function Tabs({ tabs, activeId, onChange, label }: TabsProps) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -36,7 +37,11 @@ export function Tabs({ tabs, activeId, onChange, label }: TabsProps) {
   }
 
   return (
-    <div role="tablist" aria-label={label} className="flex gap-2">
+    <div
+      role="tablist"
+      aria-label={label}
+      className="relative flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl border border-line/80 bg-raised/90 p-1 shadow-sm backdrop-blur-md"
+    >
       {tabs.map((tab, index) => {
         const selected = tab.id === activeId;
         return (
@@ -51,13 +56,18 @@ export function Tabs({ tabs, activeId, onChange, label }: TabsProps) {
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`min-h-[44px] flex-1 rounded-md px-4 py-2 text-sm font-semibold sm:flex-none ${
-              selected
-                ? 'brand-gradient text-white shadow-md'
-                : 'border border-line bg-raised text-ink hover:bg-surface'
+            className={`relative z-10 min-h-[40px] shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 sm:flex-none ${
+              selected ? 'text-white' : 'text-muted hover:text-ink'
             }`}
           >
-            {tab.label}
+            {selected && (
+              <motion.div
+                layoutId="active-tab-indicator"
+                className="brand-gradient absolute inset-0 -z-10 rounded-lg shadow-md"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">{tab.label}</span>
           </button>
         );
       })}

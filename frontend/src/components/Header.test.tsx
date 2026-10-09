@@ -41,36 +41,41 @@ function Shell({ initial = '/' }: { initial?: string }) {
 }
 
 describe('Header mode tabs', () => {
-  it('shows both modes and navigates between /app routes', async () => {
+  it('shows every mode and navigates between /app routes', async () => {
     const user = userEvent.setup();
     server.use(http.post(api('/api/leads'), () => jsonOk(leadsSuccess)));
     render(<Shell />);
-    const customers = await screen.findByRole('tab', { name: /find customers for my product/i });
-    expect(screen.getByRole('tab', { name: /find income ideas/i })).toBeInTheDocument();
+    const customers = await screen.findByRole('tab', { name: 'B2B Leads Radar' });
+    expect(screen.getByRole('tab', { name: 'Income Discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Saved Shortlist' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Trust & Scam Shield' })).toBeInTheDocument();
     await user.click(customers);
     await waitFor(() => expect(screen.getByTestId('pathname')).toHaveTextContent('/app/customers'));
-    await user.click(screen.getByRole('tab', { name: /find income ideas/i }));
+    await user.click(screen.getByRole('tab', { name: 'Income Discovery' }));
     await waitFor(() => expect(screen.getByTestId('pathname')).toHaveTextContent('/app/income'));
+    await user.click(screen.getByRole('tab', { name: 'Saved Shortlist' }));
+    await waitFor(() => expect(screen.getByTestId('pathname')).toHaveTextContent('/app/shortlist'));
   });
 
   it('marks the legacy /customers alias as the customers tab', async () => {
     server.use(http.post(api('/api/leads'), () => jsonOk(leadsSuccess)));
     render(<Shell initial="/customers" />);
-    const customers = await screen.findByRole('tab', { name: /find customers for my product/i });
+    const customers = await screen.findByRole('tab', { name: 'B2B Leads Radar' });
     expect(customers).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('hides the customers tab when the mode is disabled, keeping income intact', async () => {
+  it('hides the customers tab when the mode is disabled, keeping the rest intact', async () => {
     server.use(
       http.post(api('/api/leads'), () => jsonError('feature_disabled', 'off', 404)),
     );
     render(<Shell />);
     await waitFor(() =>
-      expect(screen.getByRole('tab', { name: /find income ideas/i })).toBeInTheDocument(),
+      expect(screen.getByRole('tab', { name: 'Income Discovery' })).toBeInTheDocument(),
     );
     await waitFor(() =>
-      expect(screen.queryByRole('tab', { name: /customers/i })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('tab', { name: /leads radar/i })).not.toBeInTheDocument(),
     );
+    expect(screen.getByRole('tab', { name: 'Saved Shortlist' })).toBeInTheDocument();
     expect(screen.getByRole('tablist', { name: /choose what to find/i })).toBeInTheDocument();
   });
 });

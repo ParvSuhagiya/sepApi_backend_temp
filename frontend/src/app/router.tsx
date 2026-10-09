@@ -17,6 +17,9 @@ const LandingPage = lazy(() =>
 const CustomersPage = lazy(() =>
   import('../pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
 );
+const ShortlistPage = lazy(() =>
+  import('../pages/ShortlistPage').then((m) => ({ default: m.ShortlistPage })),
+);
 const HowItWorksPage = lazy(() =>
   import('../pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })),
 );
@@ -51,13 +54,13 @@ export function AppRoutes() {
     <Providers>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[var(--z-toast)] focus:rounded-md focus:bg-raised focus:px-4 focus:py-2 focus:font-semibold focus:text-ink"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[var(--z-toast)] focus:rounded-xl focus:bg-raised focus:px-4 focus:py-2 focus:font-semibold focus:text-ink focus:shadow-lg"
       >
         Skip to content
       </a>
       <Header />
       <OfflineBanner />
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <ErrorBoundary>
           <Suspense fallback={<Spinner label="Loading page" />}>
             <ScrollToTop />
@@ -66,6 +69,7 @@ export function AppRoutes() {
               <Route path="/app/income" element={<HomePage />} />
               <Route path="/app/customers" element={<CustomersPage />} />
               <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/app/shortlist" element={<ShortlistPage />} />
               <Route path="/how-it-works" element={<HowItWorksPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />

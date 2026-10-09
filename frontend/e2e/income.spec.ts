@@ -100,7 +100,7 @@ test('income happy path renders results with no horizontal scroll', async ({ pag
     });
   });
   await page.goto('/app/income');
-  await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Income Discovery Radar' })).toBeVisible();
   await fillProfile(page);
   await page.getByRole('button', { name: /find income ideas/i }).click();
   await expect(page.getByRole('heading', { name: /your income opportunities/i })).toBeVisible();
@@ -165,7 +165,7 @@ test('income cold-start shows waking message on 502 retry', async ({ page }) => 
         }),
       });
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -209,5 +209,5 @@ test('income keyboard-only flow reaches and focuses results', async ({ page }) =
 test('landing links into the income app', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Find my opportunities' }).first().click();
-  await expect(page.getByRole('heading', { name: /find income ideas/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Income Discovery Radar' })).toBeVisible();
 });

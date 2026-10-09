@@ -6,6 +6,7 @@ const ROUTES = [
   '/app/income',
   '/app/customers',
   '/customers',
+  '/app/shortlist',
   '/how-it-works',
   '/privacy',
   '/terms',
