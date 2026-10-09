@@ -107,3 +107,12 @@ export function useSearchSession(): SearchSession {
   if (!session) throw new Error('useSearchSession must be used inside SearchSessionProvider');
   return session;
 }
+
+/**
+ * Optional session read for pure view components (e.g. SearchResultsView
+ * in unit tests). Returns null outside the provider instead of throwing,
+ * so the view still renders without outreach context.
+ */
+export function useOptionalSearchSession(): SearchSession | null {
+  return useContext(SearchSessionContext);
+}

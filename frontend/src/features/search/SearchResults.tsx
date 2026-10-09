@@ -1,8 +1,11 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import type { SearchInput } from '../../api/client';
 import type { SearchResponse } from '../../api/schemas';
-import { useSearchSession } from './session';
+import { useOptionalSearchSession, useSearchSession } from './session';
 import { EfficiencyStrip } from './EfficiencyStrip';
+import { ForumCard } from './ForumCard';
 import { JobList } from './JobList';
+import { LocalList } from './LocalCard';
 import { OpportunityList } from './OpportunityList';
 import { ResultNotice } from './ResultNotice';
 import { Skeleton } from '../../components/ui/feedback';
@@ -16,9 +19,13 @@ export const RESULT_SECTIONS = [
   { id: 'forum', label: 'Forum' },
 ] as const;
 
-// Lazy map chunk (Leaflet + clustering stay out of the landing bundle).
+// Lazy map + chart chunks (Leaflet, clustering and Recharts stay out of the
+// landing bundle).
 const LazyJobsMap = lazy(() =>
   import('../map/JobsMap').then((module) => ({ default: module.JobsMap })),
+);
+const LazyTrendChart = lazy(() =>
+  import('./TrendChart').then((module) => ({ default: module.TrendChart })),
 );
 
 function useActiveSection(ids: ReadonlyArray<string>): string | null {
@@ -89,9 +96,17 @@ export function ResultsNav() {
 }
 
 /** Full results layout. Section bodies arrive in steps 2.3–2.5. */
-export function SearchResultsView({ result }: { result: SearchResponse }) {
+export function SearchResultsView({
+  result,
+  profile,
+}: {
+  result: SearchResponse;
+  profile?: SearchInput | null;
+}) {
   const count = result.opportunities.length;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const session = useOptionalSearchSession();
+  const effectiveProfile = profile !== undefined ? profile : (session?.profile ?? null);
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -145,16 +160,35 @@ export function SearchResultsView({ result }: { result: SearchResponse }) {
         <h3 id="local-heading" className="text-lg font-bold text-ink">
           Nearby businesses
         </h3>
+        <div className="mt-3">
+          <LocalList places={result.local} profile={effectiveProfile} />
+        </div>
       </section>
       <section id="trends" aria-labelledby="trends-heading">
         <h3 id="trends-heading" className="text-lg font-bold text-ink">
           Demand trends
         </h3>
+        <div className="mt-3">
+          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+            <LazyTrendChart
+              keyword={result.trend_keyword}
+              growth={result.trend_growth}
+              points={result.trend}
+            />
+          </Suspense>
+        </div>
       </section>
       <section id="forum" aria-labelledby="forum-heading">
         <h3 id="forum-heading" className="text-lg font-bold text-ink">
           Forum discussions
         </h3>
+        <div className="mt-3 flex flex-col gap-4">
+          {result.forum.length === 0 ? (
+            <p className="text-sm text-muted">No forum discussions found for this search.</p>
+          ) : (
+            result.forum.map((item) => <ForumCard key={item.link} item={item} />)
+          )}
+        </div>
       </section>
     </div>
   );
