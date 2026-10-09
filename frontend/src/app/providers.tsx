@@ -3,9 +3,10 @@ import { useState, type ReactNode } from 'react';
 import { ToastProvider } from '../components/ui/Toast';
 import { SearchSessionProvider } from '../features/search/session';
 import { LeadsSessionProvider } from '../features/customers/session';
+import { ShortlistProvider } from '../features/shortlist/shortlist';
 import { ThemeProvider } from './theme';
 
-/** App-wide providers: theme, toasts, server-state cache, both mode sessions. */
+/** App-wide providers: theme, toasts, server-state cache, mode sessions, shortlist. */
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={client}>
         <ToastProvider>
           <LeadsSessionProvider>
-            <SearchSessionProvider>{children}</SearchSessionProvider>
+            <SearchSessionProvider>
+              <ShortlistProvider>{children}</ShortlistProvider>
+            </SearchSessionProvider>
           </LeadsSessionProvider>
         </ToastProvider>
       </QueryClientProvider>

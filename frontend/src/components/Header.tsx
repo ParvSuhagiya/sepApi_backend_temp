@@ -2,6 +2,7 @@ import { Moon, Radar, Sun } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../app/theme';
 import { useCustomerAvailability } from '../features/customers/availability';
+import { ShortlistMenu } from '../features/shortlist/ShortlistDrawer';
 import { Tabs } from './ui/Tabs';
 
 const MODE_TABS = [
@@ -48,6 +49,7 @@ export function Header() {
           />
         </nav>
         <div className="ms-auto flex items-center gap-2">
+          <ShortlistMenu />
           <Link
             to="/how-it-works"
             className="rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-surface"

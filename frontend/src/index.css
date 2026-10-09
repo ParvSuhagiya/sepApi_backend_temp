@@ -198,11 +198,21 @@ body {
   }
 
   .print-plan,
-  .print-plan * {
+  .print-plan *,
+  .print-shortlist,
+  .print-shortlist * {
     visibility: visible;
   }
 
   .print-plan {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    color: #000000;
+    padding: 24px;
+  }
+
+  .print-shortlist {
     position: absolute;
     inset: 0;
     background: #ffffff;

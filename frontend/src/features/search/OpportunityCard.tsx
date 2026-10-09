@@ -12,6 +12,7 @@ import { CopyButton } from '../../components/ui/CopyButton';
 import { Disclosure } from '../../components/ui/Disclosure';
 import { ScoreRing } from '../../components/ui/ScoreBadge';
 import { Tooltip } from '../../components/ui/Tooltip';
+import { StarButton } from '../shortlist/shortlist';
 
 export type OpportunityTypeLabel =
   | 'job'
@@ -123,17 +124,28 @@ export function OpportunityCard({
             </span>
           </p>
         </div>
-        <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs font-medium text-muted">
-          <input
-            type="checkbox"
-            checked={compareChecked}
-            disabled={compareDisabled}
-            onChange={(event) => onCompareChange(event.target.checked)}
-            className="h-[22px] w-[22px] accent-brand"
-            aria-label={`Compare ${opportunity.title}`}
+        <div className="flex shrink-0 items-center gap-2">
+          <StarButton
+            item={{
+              id: `opportunity:${opportunity.title}`,
+              kind: 'opportunity',
+              title: opportunity.title,
+              subtitle: typeMeta.label,
+              phone: null,
+            }}
           />
-          Compare
-        </label>
+          <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted">
+            <input
+              type="checkbox"
+              checked={compareChecked}
+              disabled={compareDisabled}
+              onChange={(event) => onCompareChange(event.target.checked)}
+              className="h-[22px] w-[22px] accent-brand"
+              aria-label={`Compare ${opportunity.title}`}
+            />
+            Compare
+          </label>
+        </div>
       </div>
 
       <p className="text-sm text-ink">{opportunity.why}</p>

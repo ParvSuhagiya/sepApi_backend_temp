@@ -2,6 +2,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import type { JobResult } from '../../api/schemas';
 import { RiskBadge, type RiskLevel } from '../../components/ui/RiskBadge';
+import { StarButton } from '../shortlist/shortlist';
 
 function toRiskLevel(risk: JobResult['risk']): RiskLevel {
   return risk === 'High' || risk === 'Medium' ? risk : 'Low';
@@ -110,7 +111,16 @@ export function JobCard({ job, highlighted, onSelect }: JobCardProps) {
         </p>
       ) : null}
 
-      <div>
+      <div className="flex flex-wrap gap-2">
+        <StarButton
+          item={{
+            id: `job:${job.title}|${job.company}`,
+            kind: 'job',
+            title: job.title,
+            subtitle: [job.company, job.location].filter(Boolean).join(' · '),
+            phone: null,
+          }}
+        />
         <button
           type="button"
           aria-pressed={highlighted}

@@ -26,6 +26,7 @@ export interface SearchSession extends SearchSnapshot {
   run: (profile: SearchInput) => void;
   retry: () => void;
   cancel: () => void;
+  reset: () => void;
 }
 
 const IDLE: SearchSnapshot = { status: 'idle', profile: null, result: null, error: null };
@@ -95,9 +96,16 @@ export function SearchSessionProvider({ children }: { children: ReactNode }) {
     search.cancel();
   }, [search.cancel]);
 
+  const reset = useCallback(() => {
+    requestRef.current += 1;
+    lastProfileRef.current = null;
+    settledRef.current = IDLE;
+    setSnapshot(IDLE);
+  }, []);
+
   const value = useMemo<SearchSession>(
-    () => ({ ...snapshot, retrying: search.retrying, run, retry, cancel }),
-    [snapshot, search.retrying, run, retry, cancel],
+    () => ({ ...snapshot, retrying: search.retrying, run, retry, cancel, reset }),
+    [snapshot, search.retrying, run, retry, cancel, reset],
   );
   return <SearchSessionContext.Provider value={value}>{children}</SearchSessionContext.Provider>;
 }

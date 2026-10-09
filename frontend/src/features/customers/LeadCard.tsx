@@ -4,6 +4,7 @@ import { CopyButton } from '../../components/ui/CopyButton';
 import { Disclosure } from '../../components/ui/Disclosure';
 import { ScoreRing } from '../../components/ui/ScoreBadge';
 import { LeadOutreach } from './LeadOutreach';
+import { StarButton } from '../shortlist/shortlist';
 import { LEAD_SCORE_WEIGHTS, splitSnippets } from './leadUtils';
 
 const SCORE_ROWS = [
@@ -211,7 +212,16 @@ export function LeadCard({
 
       <LeadOutreach lead={lead} offerText={offerText} city={city} productSummary={productSummary} />
 
-      <div>
+      <div className="flex flex-wrap gap-2">
+        <StarButton
+          item={{
+            id: `lead:${lead.name}`,
+            kind: 'lead',
+            title: lead.name,
+            subtitle: [lead.business_type, lead.address].filter(Boolean).join(' · '),
+            phone: lead.phone ?? null,
+          }}
+        />
         <button
           type="button"
           aria-pressed={highlighted}

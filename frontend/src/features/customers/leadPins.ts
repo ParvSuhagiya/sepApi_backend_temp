@@ -43,3 +43,15 @@ export function buildLeadPins(
   });
   return pins;
 }
+
+/** Map shortlisted lead titles back to pin ids (`lead-<index>`). */
+export function leadShortlistIds(
+  leads: Lead[],
+  starredTitles: ReadonlySet<string>,
+): Set<string> {
+  const ids = new Set<string>();
+  leads.forEach((lead, index) => {
+    if (starredTitles.has(lead.name)) ids.add(`lead-${index}`);
+  });
+  return ids;
+}

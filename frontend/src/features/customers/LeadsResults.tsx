@@ -1,9 +1,11 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import type { LeadsInput } from '../../api/client';
 import type { LeadsResponse } from '../../api/schemas';
 import { Skeleton } from '../../components/ui/feedback';
+import { useOptionalShortlist } from '../shortlist/shortlist';
 import { LeadCard } from './LeadCard';
 import { MarketNotes } from './MarketNotes';
+import { leadShortlistIds } from './leadPins';
 import { useOptionalLeadsSession } from './session';
 
 const LazyLeadsMap = lazy(() =>
@@ -71,8 +73,15 @@ export function LeadsResultsView({
   onEdit: () => void;
 }) {
   const session = useOptionalLeadsSession();
+  const shortlist = useOptionalShortlist();
   const effectiveInput = input ?? session?.input ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const shortlistedIds = useMemo(() => {
+    const titles = new Set(
+      (shortlist?.items ?? []).filter((item) => item.kind === 'lead').map((item) => item.title),
+    );
+    return leadShortlistIds(result.leads, titles);
+  }, [shortlist, result.leads]);
   const productSummary = result.offer_summary.trim().slice(0, 200);
   const count = result.leads.length;
 
@@ -145,7 +154,12 @@ export function LeadsResultsView({
         </h3>
         <div className="mt-3">
           <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-            <LazyLeadsMap leads={result.leads} selectedId={selectedId} onSelect={setSelectedId} />
+            <LazyLeadsMap
+              leads={result.leads}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              shortlistedIds={shortlistedIds}
+            />
           </Suspense>
         </div>
       </section>

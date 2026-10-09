@@ -26,6 +26,7 @@ export interface LeadsSession extends LeadsSnapshot {
   run: (input: LeadsInput) => void;
   retry: () => void;
   cancel: () => void;
+  reset: () => void;
 }
 
 const IDLE: LeadsSnapshot = { status: 'idle', input: null, result: null, error: null };
@@ -96,9 +97,16 @@ export function LeadsSessionProvider({ children }: { children: ReactNode }) {
     leads.cancel();
   }, [leads.cancel]);
 
+  const reset = useCallback(() => {
+    requestRef.current += 1;
+    lastInputRef.current = null;
+    settledRef.current = IDLE;
+    setSnapshot(IDLE);
+  }, []);
+
   const value = useMemo<LeadsSession>(
-    () => ({ ...snapshot, retrying: leads.retrying, run, retry, cancel }),
-    [snapshot, leads.retrying, run, retry, cancel],
+    () => ({ ...snapshot, retrying: leads.retrying, run, retry, cancel, reset }),
+    [snapshot, leads.retrying, run, retry, cancel, reset],
   );
   return <LeadsSessionContext.Provider value={value}>{children}</LeadsSessionContext.Provider>;
 }

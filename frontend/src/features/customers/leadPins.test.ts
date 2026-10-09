@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Lead } from '../../api/schemas';
-import { buildLeadPins } from './leadPins';
+import { buildLeadPins, leadShortlistIds } from './leadPins';
 
 function lead(name: string, overrides: Partial<Lead> = {}): Lead {
   return {
@@ -32,5 +32,13 @@ describe('buildLeadPins', () => {
     expect(pins[1]?.size).toBeGreaterThan(pins[0]?.size ?? 0);
     expect(pins[0]?.shortlisted).toBe(false);
     expect(pins[1]?.shortlisted).toBe(true);
+  });
+});
+
+describe('leadShortlistIds', () => {
+  it('maps starred titles back to pin ids', () => {
+    const leads = [lead('Alpha'), lead('Beta')];
+    expect(leadShortlistIds(leads, new Set(['Beta']))).toEqual(new Set(['lead-1']));
+    expect(leadShortlistIds(leads, new Set())).toEqual(new Set());
   });
 });
