@@ -95,6 +95,10 @@ export function LeadsSessionProvider({ children }: { children: ReactNode }) {
 
   const cancel = useCallback(() => {
     leads.cancel();
+    // The shared mutation reset swallows the per-call onError for
+    // cancellations, so revert here instead of waiting for a callback
+    // that never arrives. Only loading snapshots are reverted.
+    setSnapshot((prev) => (prev.status === 'loading' ? settledRef.current : prev));
   }, [leads.cancel]);
 
   const reset = useCallback(() => {

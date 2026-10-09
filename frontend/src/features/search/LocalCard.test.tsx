@@ -114,6 +114,22 @@ describe('OutreachButton flow', () => {
     expect(await screen.findByText('Could not draft message.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^retry$/i })).toBeInTheDocument();
   });
+
+  it('explains when a phone number cannot open WhatsApp', async () => {
+    const user = userEvent.setup();
+    server.use(http.post(api('/api/outreach'), () => jsonOk(outreachSuccess)));
+    render(
+      <Providers>
+        <LocalCard place={{ ...PLACE, phone: '12345' }} profile={PROFILE} />
+      </Providers>,
+    );
+    await user.click(screen.getByRole('button', { name: /draft whatsapp message/i }));
+    await screen.findByLabelText(/edit before sending/i);
+    expect(screen.getByText(/can't be opened in whatsapp/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /review, then open in whatsapp/i }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('LocalList', () => {

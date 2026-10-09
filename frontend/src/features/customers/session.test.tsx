@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { useState, type ReactNode } from 'react';
@@ -29,6 +29,12 @@ function Probe() {
       </button>
       <button type="button" onClick={() => session.retry()}>
         retry
+      </button>
+      <button type="button" onClick={() => session.cancel()}>
+        cancel
+      </button>
+      <button type="button" onClick={() => session.reset()}>
+        reset
       </button>
     </div>
   );
@@ -147,6 +153,38 @@ describe('leads session', () => {
     await user.click(screen.getByRole('button', { name: 'retry' }));
     await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('success'));
     expect(calls).toBe(3);
+  });
+
+  it('cancels back to the settled snapshot and resets to idle', async () => {
+    const user = userEvent.setup();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.post(api('/api/leads'), async () => {
+        await gate;
+        return jsonOk(leadsSuccess);
+      }),
+    );
+    render(
+      <Providers>
+        <Probe />
+      </Providers>,
+    );
+    // Retry and reset before any run are safe no-ops.
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+    expect(screen.getByTestId('status')).toHaveTextContent('idle');
+    fireEvent.click(screen.getByRole('button', { name: 'run' }));
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('loading'));
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }));
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('idle'));
+    release();
+    fireEvent.click(screen.getByRole('button', { name: 'run' }));
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('success'));
+    await user.click(screen.getByRole('button', { name: 'reset' }));
+    expect(screen.getByTestId('status')).toHaveTextContent('idle');
+    expect(screen.getByTestId('leads')).toHaveTextContent('none');
   });
 
   it('keeps results when the consumer unmounts and remounts', async () => {

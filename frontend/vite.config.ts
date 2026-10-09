@@ -20,5 +20,10 @@ export default defineConfig({
     globals: false,
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['e2e/**', 'node_modules', 'dist'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/features/**', 'src/lib/**'],
+      thresholds: { lines: 85, functions: 85, branches: 85, statements: 85 },
+    },
   },
 });

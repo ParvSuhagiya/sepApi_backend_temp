@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LeadsSessionProvider } from '../customers/session';
 import { SearchSessionProvider } from '../search/session';
-import { ShortlistDrawer } from './ShortlistDrawer';
+import { ShortlistDrawer, ShortlistMenu } from './ShortlistDrawer';
 import { ShortlistProvider, useShortlist } from './shortlist';
 
 const DRAFT = {
@@ -162,3 +162,42 @@ describe('ShortlistDrawer', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe('ShortlistMenu', () => {
+  it('renders nothing without a provider', () => {
+    const { container } = render(<ShortlistMenu />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('opens and closes the drawer from the header badge', async () => {
+    const user = userEvent.setup();
+    render(<MenuShell />);
+    await user.click(screen.getByRole('button', { name: /open shortlist, 0 items/i }));
+    expect(screen.getByRole('dialog', { name: /shortlist \(0\)/i })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+function MenuShell() {
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      }),
+  );
+  return (
+    <QueryClientProvider client={client}>
+      <LeadsSessionProvider>
+        <SearchSessionProvider>
+          <ShortlistProvider>
+            <ShortlistMenu />
+          </ShortlistProvider>
+        </SearchSessionProvider>
+      </LeadsSessionProvider>
+    </QueryClientProvider>
+  );
+}

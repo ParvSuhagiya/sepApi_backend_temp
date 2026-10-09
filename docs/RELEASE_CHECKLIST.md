@@ -46,6 +46,26 @@ git ls-files | grep -E "\.env$|cache\.db|node_modules|__pycache__"
 grep -rn "sk-\|AIza\|gsk_\|SERPAPI\|API_KEY" frontend/src frontend/dist || echo "no keys in frontend"
 ```
 
+## Frontend release (Vercel)
+
+- [ ] `VITE_API_URL` is the production Render backend URL (no trailing slash);
+      optional `VITE_ACCESS_CODE` matches the backend decision below
+- [ ] Backend `ALLOWED_ORIGINS` is the exact production frontend URL
+      (`https://earnrader.vercel.app` unless the project was renamed — no
+      trailing slash, and `robots.txt`/`sitemap.xml` updated to match)
+- [ ] `ACCESS_CODE` decision recorded: set (demo gate) or empty (open);
+      the frontend `.env` mirrors it
+- [ ] 360 px check done on mobile-360 Playwright project: no horizontal
+      scroll on `/`, both app routes with results, and the shortlist drawer
+- [ ] Lighthouse report attached (Performance ≥ 90, Accessibility ≥ 95,
+      Best Practices ≥ 95, SEO ≥ 95 on a mid-range mobile profile)
+- [ ] `npm run size-check` passes (landing < 150 kB, app route < 350 kB gzip)
+- [ ] Axe clean on every route in light and dark (`e2e/routes.spec.ts`)
+- [ ] `python -m scripts.prewarm` run after deploy; demo readiness check passes
+- [ ] Backup screen recording of both demo paths captured before the event
+- [ ] Rollback plan: previous Vercel deployment kept for instant rollback
+      (and previous Render deployment for the backend)
+
 ## Rollback / backup
 
 - [ ] Backup screen recording of the demo path captured before the event

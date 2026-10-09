@@ -55,6 +55,34 @@ describe('SearchResultsView', () => {
     expect(screen.getByRole('link', { name: 'Jobs' })).toHaveAttribute('aria-current', 'true');
   });
 
+  it('renders without scroll-spy when IntersectionObserver is missing', () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    render(<SearchResultsView result={result} />);
+    expect(screen.getByRole('navigation', { name: 'On this page' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { current: true })).not.toBeInTheDocument();
+  });
+
+  it('jumps to sections through nav links', async () => {
+    const user = userEvent.setup();
+    render(<SearchResultsView result={result} />);
+    await user.click(screen.getByRole('link', { name: 'Jobs' }));
+    expect(window.location.hash).toBe('#jobs');
+  });
+
+  it('uses smooth scrolling when the browser supports it', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    render(<SearchResultsView result={result} />);
+    const target = document.getElementById('jobs') as unknown as {
+      scrollIntoView?: (options?: unknown) => void;
+    };
+    const scroll = vi.fn();
+    target.scrollIntoView = scroll;
+    await user.click(screen.getByRole('link', { name: 'Jobs' }));
+    expect(scroll).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    delete target.scrollIntoView;
+  });
+
   it('shows degraded, partial and mapped notes', () => {
     render(
       <SearchResultsView

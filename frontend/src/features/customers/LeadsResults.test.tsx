@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { LeadsResponse } from '../../api/schemas';
 import { leadsSuccess } from '../../test/fixtures';
+import { ShortlistProvider } from '../shortlist/shortlist';
 import { LeadsNotice, LeadsResultsView } from './LeadsResults';
 
 const result = leadsSuccess as unknown as LeadsResponse;
@@ -71,6 +72,33 @@ describe('LeadsResultsView', () => {
       <LeadsResultsView result={{ ...result, leads: [] }} input={input} onEdit={() => {}} />,
     );
     expect(screen.getByText(/no customer leads found/i)).toBeInTheDocument();
+  });
+
+  it('hides query details and syncs the map without an input', async () => {
+    const user = userEvent.setup();
+    view(<LeadsResultsView result={result} input={null} onEdit={() => {}} />);
+    expect(screen.queryByText(/city:/i)).not.toBeInTheDocument();
+    const card = screen.getByRole('heading', { name: 'Sharma Restaurant' }).closest('article');
+    if (!card) throw new Error('card missing');
+    await user.click(within(card).getByRole('button', { name: /show on map/i }));
+    expect(
+      within(card).getByRole('button', { name: /showing on map/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('flags shortlisted leads for the map layer', async () => {
+    const user = userEvent.setup();
+    render(
+      <ShortlistProvider>
+        <Providers>
+          <LeadsResultsView result={result} input={input} onEdit={() => {}} />
+        </Providers>
+      </ShortlistProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Add Sharma Restaurant to shortlist' }));
+    expect(
+      screen.getByRole('button', { name: 'Remove Sharma Restaurant from shortlist' }),
+    ).toBeInTheDocument();
   });
 });
 

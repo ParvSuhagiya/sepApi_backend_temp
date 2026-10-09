@@ -49,18 +49,42 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Run tests
+      - name: Lint
         working-directory: frontend
-        run: npm test -- --run
+        run: npm run lint
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Unit tests with coverage (features/ and lib/ >= 85%)
+        working-directory: frontend
+        run: npm test -- --run --coverage
       - name: Build
         working-directory: frontend
         run: npm run build
+      - name: Route bundle budgets
+        working-directory: frontend
+        run: npm run size-check
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Playwright e2e + axe
+        working-directory: frontend
+        run: npm run test:e2e
       - name: Ensure no API keys in source or bundle
         working-directory: frontend
         run: "! grep -rn 'sk-\\|AIza\\|gsk_\\|SERPAPI\\|API_KEY' src dist || (echo 'API key found in frontend' && exit 1)"
+      - name: Dependency audit (non-blocking report)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm audit --omit=dev || true
+      - name: Lighthouse CI (optional)
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          if [ -f lighthouserc.json ]; then npx -y @lhci/cli autorun; else echo "no lighthouserc.json; skipping Lighthouse CI"; fi

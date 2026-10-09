@@ -193,6 +193,26 @@ describe('LeadCard outreach flow', () => {
     open.mockRestore();
   });
 
+  it('explains when a phone number cannot open WhatsApp', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post(api('/api/outreach'), () =>
+        jsonOk({
+          message: 'Hello.',
+          safety_note: 'Verify the business before paying or sharing documents.',
+        }),
+      ),
+    );
+    render(
+      <Providers>
+        <LeadCard {...cardProps} lead={lead({ phone: '12345' })} />
+      </Providers>,
+    );
+    await user.click(screen.getByRole('button', { name: /draft whatsapp message/i }));
+    await screen.findByLabelText(/edit before sending/i);
+    expect(screen.getByText(/can't be opened in whatsapp/i)).toBeInTheDocument();
+  });
+
   it('hides the outreach flow without a phone and errors with retry', async () => {
     const user = userEvent.setup();
     server.use(http.post(api('/api/outreach'), () => jsonError('upstream_failure', 'down', 502)));

@@ -94,6 +94,10 @@ export function SearchSessionProvider({ children }: { children: ReactNode }) {
 
   const cancel = useCallback(() => {
     search.cancel();
+    // The shared mutation reset swallows the per-call onError for
+    // cancellations, so revert here instead of waiting for a callback
+    // that never arrives. Only loading snapshots are reverted.
+    setSnapshot((prev) => (prev.status === 'loading' ? settledRef.current : prev));
   }, [search.cancel]);
 
   const reset = useCallback(() => {
