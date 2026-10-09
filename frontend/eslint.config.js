@@ -26,6 +26,10 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
+    files: ['scripts/**/*.mjs', 'playwright.config.ts', 'vite.config.ts'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     settings: { react: { version: 'detect' } },
     rules: {
       'react/react-in-jsx-scope': 'off',
