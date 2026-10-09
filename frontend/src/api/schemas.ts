@@ -103,6 +103,13 @@ const leadSchema = z.object({
   score_breakdown: z.record(z.string(), z.number()),
   likely_has_software: z.boolean(),
   adjustments: z.array(z.string()),
+  // Forward-compatible extras: absent from today's backend response but
+  // rendered when present. All optional so current payloads still validate.
+  website: z.string().nullable().optional(),
+  research: z.enum(['pending', 'ok', 'partial']).nullable().optional(),
+  pain_snippets: z.array(z.string()).nullable().optional(),
+  lat: z.number().nullable().optional(),
+  lng: z.number().nullable().optional(),
 });
 
 export const leadsResponseSchema = z.object({

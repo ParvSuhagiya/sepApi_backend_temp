@@ -1,15 +1,16 @@
 import { Moon, Radar, Sun } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../app/theme';
+import { useCustomerAvailability } from '../features/customers/availability';
 import { Tabs } from './ui/Tabs';
 
 const MODE_TABS = [
   { id: '/app/income', label: 'Find income ideas' },
-  { id: '/customers', label: 'Find customers' },
+  { id: '/app/customers', label: 'Find customers for my product' },
 ] as const;
 
 function activeTab(pathname: string): string {
-  if (pathname === '/customers') return '/customers';
+  if (pathname === '/customers' || pathname === '/app/customers') return '/app/customers';
   return '/app/income';
 }
 
@@ -18,6 +19,14 @@ export function Header() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { resolved, toggle } = useTheme();
+  const { available } = useCustomerAvailability();
+  const visibleTabs = MODE_TABS.filter(
+    (tab) => available || tab.id === '/app/income',
+  );
+  const current = activeTab(pathname);
+  const activeId = visibleTabs.some((tab) => tab.id === current)
+    ? current
+    : '/app/income';
 
   return (
     <header className="border-b border-line bg-raised">
@@ -33,8 +42,8 @@ export function Header() {
         <nav aria-label="Modes" className="order-3 w-full sm:order-none sm:w-auto">
           <Tabs
             label="Choose what to find"
-            tabs={MODE_TABS}
-            activeId={activeTab(pathname)}
+            tabs={visibleTabs}
+            activeId={activeId}
             onChange={(id) => navigate(id)}
           />
         </nav>
