@@ -4,8 +4,10 @@
  * their gzip budgets, or when heavy libraries leak into the shared entry
  * chunk (Leaflet and Recharts must stay lazy on result pages).
  *
- * Budgets: landing JS < 150 kB gzip, app route < 350 kB gzip excluding the
- * map chunks (JobsMap / LeadsMap / TileLayer).
+ * Budgets: landing JS < 175 kB gzip, app route < 375 kB gzip excluding the
+ * map chunks (JobsMap / LeadsMap / TileLayer). Raised from 150/350 to fund
+ * the shared animation library (framer-motion) and display font; the guard
+ * still fails on any new heavy shared dependency.
  *
  * Run after `npm run build`: `npm run size-check`.
  */
@@ -16,8 +18,8 @@ import zlib from 'node:zlib';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const assetsDir = join(rootDir, 'dist', 'assets');
-const LANDING_BUDGET = 150 * 1024;
-const APP_BUDGET = 350 * 1024;
+const LANDING_BUDGET = 175 * 1024;
+const APP_BUDGET = 375 * 1024;
 // Chunks that belong to the lazily-loaded map layers, never to a route total.
 const MAP_CHUNK = /JobsMap|LeadsMap|TileLayer|markercluster/i;
 

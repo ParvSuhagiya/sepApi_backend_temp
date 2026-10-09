@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MotionConfig } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 import { ToastProvider } from '../components/ui/Toast';
 import { SearchSessionProvider } from '../features/search/session';
@@ -24,15 +25,17 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <ThemeProvider>
-      <QueryClientProvider client={client}>
-        <ToastProvider>
-          <LeadsSessionProvider>
-            <SearchSessionProvider>
-              <ShortlistProvider>{children}</ShortlistProvider>
-            </SearchSessionProvider>
-          </LeadsSessionProvider>
-        </ToastProvider>
-      </QueryClientProvider>
+      <MotionConfig reducedMotion="user">
+        <QueryClientProvider client={client}>
+          <ToastProvider>
+            <LeadsSessionProvider>
+              <SearchSessionProvider>
+                <ShortlistProvider>{children}</ShortlistProvider>
+              </SearchSessionProvider>
+            </LeadsSessionProvider>
+          </ToastProvider>
+        </QueryClientProvider>
+      </MotionConfig>
     </ThemeProvider>
   );
 }
