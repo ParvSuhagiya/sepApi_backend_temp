@@ -66,7 +66,7 @@ export function AppRoutes() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+        className="w-full flex-1 py-6 sm:py-8"
       >
         <ErrorBoundary>
           <Suspense fallback={<Spinner label="Loading page" />}>
@@ -74,17 +74,17 @@ export function AppRoutes() {
             <PageTransition key={pathname}>
               <Routes location={pathname}>
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/app/income" element={<HomePage />} />
-                <Route path="/app/customers" element={<CustomersPage />} />
-                <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/app/shortlist" element={<ShortlistPage />} />
-                <Route path="/app/overview" element={<OverviewPage />} />
-                <Route path="/how-it-works" element={<HowItWorksPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
-                <Route path="/terms" element={<TermsPage />} />
-                <Route path="/responsible-use" element={<ResponsibleUsePage />} />
-                {DevUiRoute ? <Route path="/dev/ui" element={<DevUiRoute />} /> : null}
-                <Route path="*" element={<NotFoundPage />} />
+                <Route path="/app/income" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><HomePage /></div>} />
+                <Route path="/app/customers" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><CustomersPage /></div>} />
+                <Route path="/customers" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><CustomersPage /></div>} />
+                <Route path="/app/shortlist" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><ShortlistPage /></div>} />
+                <Route path="/app/overview" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><OverviewPage /></div>} />
+                <Route path="/how-it-works" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><HowItWorksPage /></div>} />
+                <Route path="/privacy" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><PrivacyPage /></div>} />
+                <Route path="/terms" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><TermsPage /></div>} />
+                <Route path="/responsible-use" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><ResponsibleUsePage /></div>} />
+                {DevUiRoute ? <Route path="/dev/ui" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><DevUiRoute /></div>} /> : null}
+                <Route path="*" element={<div className="mx-auto w-full max-w-7xl px-4 sm:px-6"><NotFoundPage /></div>} />
               </Routes>
             </PageTransition>
           </Suspense>

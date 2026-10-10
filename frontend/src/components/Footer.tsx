@@ -1,118 +1,132 @@
 import { Link } from 'react-router-dom';
-import { Radar, ShieldCheck } from 'lucide-react';
-import { Reveal } from './motion';
 import { useHealth } from '../api/hooks';
 
-/** Stitch institutional footer: brand + telemetry columns + governance. */
 export function Footer() {
   const { data, isError, isPending } = useHealth();
-  const status = isPending ? (
-    <span className="tnum inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
-      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-muted" />
-      Checking API…
-    </span>
-  ) : isError || !data?.ok ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-tone-red-border bg-tone-red-bg px-2.5 py-1 text-[11px] font-semibold text-tone-red-fg">
-      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-white" />
-      API unreachable
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-      <span aria-hidden="true" className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-      </span>
-      API online{data?.version ? ` · v${data.version}` : null}
-    </span>
-  );
+
+  const dot = isPending
+    ? { color: 'var(--er-muted)', label: 'Checking…' }
+    : isError || !data?.ok
+      ? { color: 'var(--er-danger)', label: 'API unreachable' }
+      : { color: 'var(--er-success)', label: `API online${data?.version ? ` · v${data.version}` : ''}` };
 
   return (
-    <footer className="mt-12 border-t border-line bg-raised shadow-[0_-1px_8px_rgba(0,0,0,0.03)]">
-      <Reveal>
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm md:grid-cols-2 lg:grid-cols-5">
-          <div className="flex flex-col items-start gap-3 lg:col-span-2">
-            <span className="flex items-center gap-2 text-base font-bold text-ink">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#4f46e5] text-white">
-                <Radar aria-hidden="true" className="h-4 w-4" />
-              </span>
-              <span className="font-display tracking-tight">
-                Earn<span className="text-brand">Radar</span> Institutional
-              </span>
+    <footer
+      style={{
+        borderTop: '1px solid var(--er-line)',
+        background: 'var(--er-raised)',
+        marginTop: 'auto',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          padding: '40px 24px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 32,
+        }}
+      >
+        {/* Brand */}
+        <div style={{ gridColumn: 'span 2' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 12 }}>
+            <span
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 8,
+                background: 'var(--er-accent)',
+                color: '#fff',
+                fontSize: 12,
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ER
             </span>
-            <p className="max-w-sm text-muted">
-              Sovereign telemetry and high-velocity capital exploration for verified regional
-              opportunities, structured revenue vectors, and institutional lead scouting.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink">
-                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500" />
-                Indore Gateway: 99.98% Up
-              </span>
-              <span className="tnum rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
-                Latency: 14ms
-              </span>
-              {status}
-            </div>
-          </div>
-          <nav aria-label="Telemetry and nodes" className="flex flex-col items-start gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink">Telemetry & Nodes</p>
-            <Link to="/app/income" className="text-muted transition-colors hover:text-ink">
-              Indore Central MP-09
-            </Link>
-            <Link to="/app/customers" className="text-muted transition-colors hover:text-ink">
-              B2B Corridor Telemetry
-            </Link>
-            <Link to="/how-it-works" className="text-muted transition-colors hover:text-ink">
-              Verification Mesh
-            </Link>
-            <Link to="/app/overview" className="text-muted transition-colors hover:text-ink">
-              Raw Stream (gRPC/REST)
-            </Link>
-          </nav>
-          <nav aria-label="Intelligence platform" className="flex flex-col items-start gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink">
-              Intelligence Platform
-            </p>
-            <Link to="/app/income" className="text-muted transition-colors hover:text-ink">
-              Income Discovery
-            </Link>
-            <Link to="/app/customers" className="text-muted transition-colors hover:text-ink">
-              B2B Leads Radar
-            </Link>
-            <Link to="/app/shortlist" className="text-muted transition-colors hover:text-ink">
-              Shortlist & Action Hub
-            </Link>
-            <Link to="/how-it-works" className="text-muted transition-colors hover:text-ink">
-              Security Architecture
-            </Link>
-          </nav>
-          <nav aria-label="Governance and trust" className="flex flex-col items-start gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink">
-              Governance & Trust
-            </p>
-            <Link to="/responsible-use" className="text-muted transition-colors hover:text-ink">
-              Bharat Regulatory Framework
-            </Link>
-            <Link to="/privacy" className="text-muted transition-colors hover:text-ink">
-              DPDP Act (2023) Compliance
-            </Link>
-            <Link to="/terms" className="text-muted transition-colors hover:text-ink">
-              Terms & Risk Disclosure
-            </Link>
-            <Link to="/how-it-works" className="text-muted transition-colors hover:text-ink">
-              Sovereign Data Guard
-            </Link>
-          </nav>
-        </div>
-      </Reveal>
-      <div className="border-t border-line">
-        <div className="tnum mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted">
-          <p className="inline-flex items-center gap-1.5">
-            <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5 text-emerald-600" />
-            ISO 27001 Certified Nodes • Telemetry Stream: Active
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--er-ink)', letterSpacing: '-0.01em' }}>
+              EarnRadar
+            </span>
+          </Link>
+          <p style={{ fontSize: 13, color: 'var(--er-muted)', lineHeight: 1.65, maxWidth: 240, margin: '0 0 14px' }}>
+            Income discovery and B2B lead intelligence for Tier 2/3 India, with built-in fraud protection.
           </p>
-          <p>© 2025 EarnRadar Bharat Grid. Sovereign Telemetry & Financial Intelligence Systems.</p>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: 11,
+              fontWeight: 500,
+              color: 'var(--er-muted)',
+              padding: '4px 10px',
+              borderRadius: 99,
+              border: '1px solid var(--er-line)',
+              background: 'var(--er-surface)',
+            }}
+          >
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot.color, display: 'inline-block' }} />
+            {dot.label}
+          </span>
         </div>
+
+        {/* Product links */}
+        <nav aria-label="Product">
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--er-ink)', marginBottom: 12 }}>Product</p>
+          {[
+            { to: '/app/income',    label: 'Income Discovery' },
+            { to: '/app/customers', label: 'B2B Leads' },
+            { to: '/app/shortlist', label: 'Shortlist' },
+            { to: '/how-it-works',  label: 'How it works' },
+          ].map((l) => (
+            <Link key={l.to} to={l.to} style={{ display: 'block', fontSize: 13, color: 'var(--er-muted)', textDecoration: 'none', marginBottom: 8, transition: 'color .15s' }}
+              onMouseOver={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--er-ink)'; }}
+              onMouseOut={(e)  => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--er-muted)'; }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Legal links */}
+        <nav aria-label="Legal">
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--er-ink)', marginBottom: 12 }}>Legal</p>
+          {[
+            { to: '/privacy',          label: 'Privacy Policy' },
+            { to: '/terms',            label: 'Terms of Service' },
+            { to: '/responsible-use',  label: 'Responsible Use' },
+          ].map((l) => (
+            <Link key={l.to} to={l.to} style={{ display: 'block', fontSize: 13, color: 'var(--er-muted)', textDecoration: 'none', marginBottom: 8 }}
+              onMouseOver={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--er-ink)'; }}
+              onMouseOut={(e)  => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--er-muted)'; }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      <div
+        style={{
+          borderTop: '1px solid var(--er-line)',
+          padding: '14px 24px',
+          maxWidth: 1280,
+          margin: '0 auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
+        <p style={{ fontSize: 12, color: 'var(--er-muted)', margin: 0 }}>
+          © 2025 EarnRadar · Income estimates, not promises
+        </p>
+        <p style={{ fontSize: 12, color: 'var(--er-muted)', margin: 0 }}>
+          DPDP Act (2023) Compliant · Zero auto-send
+        </p>
       </div>
     </footer>
   );
